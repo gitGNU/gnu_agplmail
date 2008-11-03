@@ -140,6 +140,16 @@ function get_mess($messid, $name) {
 	}
 }
 
+function count_mess($cond) {
+	global $con;
+	global $db_prefix;
+	global $user;
+	if ($result = mysql_query("SELECT COUNT(DISTINCT messid) FROM `".$db_prefix."mess` WHERE account='$user' AND ".$cond,$con)); else die(mysql_error());
+	if ($row = mysql_fetch_array($result)) {
+		return $row["COUNT(DISTINCT messid)"];
+	}
+}
+
 $con = mysql_connect($db_host,$db_name,$db_pass);
 if (!$con) {
   die('Could not connect: ' . mysql_error());
@@ -485,45 +495,20 @@ else {
 		$threadlen = 0;
 		$convos = array();
 		$i = 0;
-		$seen = true;
-		$star = false;
-		$allarchived = true;
-		$del = false;
-		$convorows = array();
-		$messrows = array();
 		foreach ($threads as $key => $val) {
 			$tree = explode('.', $key);
 			if ($tree[1] == 'num' && $val != 0) {
-				$tmpheader = imap_headerinfo($mbox, $val);
-				if ($tmpheader->Unseen == "U" || $tmpheader->Recent == "N") $seen = false;
-				if ($tmpheader->Flagged == "F") $star = true;
-				if($threadlen == 0) {
-					$header = $tmpheader;
-				}
-				if (get_mess($tmpheader->message_id, "archived") != 1) $allarchived = false;
-				if (get_mess($tmpheader->message_id, "deleted") == 1) $del = true;
 				$threadlen++;
 				$convos[$i][] = $val;
 			} elseif ($tree[1] == 'branch') {
 				if ($threadlen != 0) {
-					if ( ( ((!$allarchived && $view=="inbox") || ($allarchived && $view=="arc") || ($star && $view=="star")) && !$del )
-					|| ( $del && $view=="bin" )  ) {
-						if ($seen) $class = "read";
-						else $class = "unread";
-						$convorows[] = $i;
-						$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$threadlen.")</td><td><a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date($header->udate)."</td></tr>\n";
-					}
 					$i++;
 				}
 				$threadlen = 0;
-				$seen = true;
-				$star = false;
-				$allarchived = true;
-				$del = false;
 			}
 		}
-		$messrows = array_reverse($messrows);
-		$convorows = array_reverse($convorows);
+		
+		$listlen = 50;
 		if ($_GET['pos'] != "") {
 			$liststart = $_GET['pos'];
 			$_SESSION['pos'] = $_GET['pos'];
@@ -534,14 +519,48 @@ else {
 		else {
 			$liststart = 0;
 		}
-		$listlen = 50;
-		if (sizeof($messrows) > $liststart+$listlen) {
-			$listend = $liststart+$listlen;
-			$next = true;
+		
+		if ($view=="inbox") {
+			$arc = count_mess("archived=1 AND deleted=0");
+			$total = sizeof($convos) - $arc;
 		}
-		else {
-			$listend = sizeof($messrows);
+		elseif ($view=="arc") {
+			$total = count_mess("archived=1 AND deleted=0");
 		}
+		
+		$messrows = array();
+		$i = sizeof($convos);
+		$convoend = $i;
+		$count = 0;
+		$next = true;
+		while ($count < $listlen) {
+			$i--;$convostart = $i;
+			$seen = true;
+			$star = false;
+			$allarchived = true;
+			$del = false;
+			if (!$convos[$i]) {
+				$next = false;
+				break;
+			}
+			foreach($convos[$i] as $val) {
+				$tmpheader = imap_headerinfo($mbox, $val);
+				if ($tmpheader->Unseen == "U" || $tmpheader->Recent == "N") $seen = false;
+				if ($tmpheader->Flagged == "F") $star = true;
+				if (get_mess($tmpheader->message_id, "archived") != 1) $allarchived = false;
+				if (get_mess($tmpheader->message_id, "deleted") == 1) $del = true;
+			}
+			$header = $tmpheader = imap_headerinfo($mbox, $convos[$i][0]);
+			if ( ( ((!$allarchived && $view=="inbox") || ($allarchived && $view=="arc") || ($star && $view=="star")) && !$del )
+				|| ( $del && $view=="bin" )  ) {
+					if ($seen) $class = "read";
+					else $class = "unread";
+					$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".sizeof($convos[$i]).")</td><td><a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date($header->udate)."</td></tr>\n";
+					$count++;
+			}
+		}
+		$convostart = $i;
+		$listend = $liststart + $count;
 ?>
 <script language="javascript">
 	function hili(num,base) {
@@ -578,10 +597,10 @@ else {
 	}
 	function moreact(value) {
 		range=""
-		i=<?php echo $convorows[$listend-1] ?>;
+		i=<?php echo $convostart ?>;
 		first = true;
 		// Big HACK
-		while (i < <?php echo ($convorows[$liststart]+1) ?>) {
+		while (i < <?php echo $convoend ?>) {
 			if (document.getElementById("tick"+i)) {
 				if (document.getElementById("tick"+i).checked) {
 					if (first) {
@@ -606,12 +625,12 @@ else {
 <?php
 		echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
 		echo "<tr class=\"header\"><td colspan=\"4\">".actions()."<br/>Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a></td>";
-		echo "<td>".($liststart+1)." - $listend of ".sizeof($messrows)."<br/>";
+		echo "<td>".($liststart+1)." - $listend of $total<br/>";
 		if ($liststart > 0) echo "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
 		if ($next) echo "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
 		echo "</td></tr>";
-		for ($i=$liststart; $i<$listend; $i++) {
-			echo $messrows[$i];
+		foreach ($messrows as $messrow) {
+			echo $messrow;
 		}
 		echo "</form></table>";
 		$_SESSION['convos'] = $convos;
