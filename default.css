@@ -1,0 +1,89 @@
+/*
+# Copyright (C) 2008 Ben Webb <dreamer@freedomdreams.co.uk>
+# This file is part of AGPLMail.
+# 
+# AGPLMail is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# AGPLMail is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with AGPLMail.  If not, see <http://www.gnu.org/licenses/>.
+*/
+body {
+	font-family: arial, helvetica, sans-serif;
+}
+a {
+	color: blue;
+}
+h1, h2 {
+	font-family: serif;
+}
+h1 {
+	display: inline;
+}
+#intro {
+	margin-bottom: 16px;
+}
+#sidebar {
+	float: left;
+	width: 100px;
+	margin-right: 27px;
+	margin-top: 16px;
+}
+#sidebar h2 {
+	margin-bottom: 0px;
+}
+#main {
+	margin-left: 127px;
+}
+#main h2 {
+	text-align: center;
+	margin: 0px;
+}
+.ehead, .efoot {
+	font-style: italic;
+	background-color: #AAFFAA;
+	padding: 7px;
+}
+#esend, .econ {
+	margin-left: 16px;
+}
+.emess {
+	border-left: medium solid #AAFFAA;
+	border-right: medium solid #AAFFAA;
+	margin-bottom: 15px;
+}
+#reply {
+	visibility: hidden;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+#list {
+	border-left: thin solid black;
+	border-right: thin solid black;
+	border-top: thin solid black;
+	border-spacing: 0px;
+}
+#list td {
+	border-bottom: thin solid black;
+	padding: 3px;
+}
+tr.read {
+	background-color: #DDFFDD;
+}
+tr.read_sel, tr.unread_sel {
+	background-color: #FFFFDD;	
+}
+tr.header {
+	background-color: #AAFFAA;
+}
+#notif {
+	background-color: #FFFF55;
+}

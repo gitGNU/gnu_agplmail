@@ -18,265 +18,15 @@
 */
 
 include "config.php";
-
+include "functions.php";
 $me = $_SERVER['SCRIPT_NAME'];
-
-if ($_GET['do'] == "src") {
-	header('Content-type: text/plain');
-	$myself = file($_SERVER['SCRIPT_FILENAME']);
-	foreach ($myself as $line)
-		echo $line;
-	die();
-}
-
-function nice_date($indate) {
-	$now = time();
-	return date("H:i j M",$indate);
-}
-function nice_view($f) {
-	if ($f == "inbox") return "Inbox";
-	elseif ($f == "arc") return "Archive";
-	elseif ($f == "star") return "Starred";
-	elseif ($f == "bin") return "Bin";
-	else return $f;
-}
-function nice_addr_list($list) {
-	$strout = "";
-	$first = true;
-	foreach ($list as $item) {
-		if ($first) $first = false;
-		else $strout .= ", ";
-		$strout .= $item->personal." &lt;".$item->mailbox."@".$item->host."&gt;";
-	}
-	return $strout;
-}
-function nice_re($sub) {
-	if (ereg('Re: .*',$sub))
-		return $sub;
-	else return "Re: ".$sub;
-}
-function nice_subject($sub) {
-	if ($sub) return $sub;
-	else return "(no subject)";
-}
-function nice_s($num) {
-	if ($num == 1)
-		return "";
-	else
-		return "s";
-}
-function indent($mess) {
-	return "> ".ereg_replace("\n","\n> ",$mess);
-}
-function enewtext($to, $cc, $bcc, $sub, $con) {
-	return "<form method=\"post\" action=\"$me?do=send\" id=\"form\">
-	To: <input name=\"to\" value=\"$to\"/><br/>
-	CC: <input name=\"cc\" value=\"$cc\"/><br/>
-	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
-	Subject: <input name=\"subject\" value=\"$sub\"><br/>
-	<textarea rows=\"20\" cols=\"60\" name=\"content\">$con</textarea><br/>
-	<button type=\"submit\">Send<button>
-</form>";
-}
-function actions() {
-	global $view;
-	if ($view == "inbox")
-		$atext = "<button type=\"button\" onClick=\"javascript:moreact('arc')\">Archive</button>";
-	elseif ($view == "arc")
-		$atext = "<button type=\"button\" onClick=\"javascript:moreact('unarc')\">Move to Inbox</button>";
-	if ($view == "bin")
-		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('realdel')\">Delete Forever</button> <button type=\"button\" onClick=\"javascript:moreact('undel')\">Restore</button>";
-	else
-		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
-	$atext .= " <select><option>More Actions</option><option onClick=\"javascript:moreact('read')\">Mark as Read</option><option onClick=\"javascript:moreact('unread')\">Mark as Unread</option><option onClick=\"javascript:moreact('star')\">Add star</option><option onClick=\"javascript:moreact('unstar')\">Remove star</option></select> <a href=\"$self\">Refresh</a>";
-	return $atext;
-}
-function add_setting($name, $value) {
-	global $con;
-	global $db_prefix;
-	global $user;
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."settings` WHERE account='$user' AND name='$name'",$con)); else die(mysql_error());
-	if (mysql_fetch_array($result)) {
-		if (mysql_query("UPDATE `".$db_prefix."settings` SET value='$value' WHERE account='$user' AND name='$name'", $con)); else die(mysql_error());
-	}
-	else {
-		if (mysql_query("INSERT INTO `".$db_prefix."settings` (account, name, value) VALUES('$user', '$name', '$value')", $con)); else die(mysql_error());
-	}
-}
-function get_setting($name) {
-	global $con;
-	global $db_prefix;
-	global $user;$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."settings` WHERE account='$user' AND name='$name'",$con)); else die(mysql_error());
-	if ($row=mysql_fetch_array($result)) {
-		return $row["value"];
-	}
-}
-function starpic($star, $convo) {
-	if ($star)
-		return "<a href=\"$me?do=listaction&type=unstar&range=$convo\">[*]</a>";
-	else
-		return "<a href=\"$me?do=listaction&type=star&range=$convo\">[ ]</a>";
-}
-function set_mess($messid, $name, $value) {
-	global $con;
-	global $db_prefix;
-	global $user;
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE account='$user' AND messid='$messid'",$con)); else die(mysql_error());
-	if (mysql_fetch_array($result)) {
-		if (mysql_query("UPDATE `".$db_prefix."mess` SET $name=$value WHERE account='$user' AND messid='$messid'", $con)); else die(mysql_error());
-	}
-	else {
-		if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, messid, $name) VALUES('$user', '$messid', $value)", $con)); else die(mysql_error());
-	}
-}
-function get_mess($messid, $name) {
-	global $con;
-	global $db_prefix;
-	global $user;
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE account='$user' AND messid='$messid'",$con)); else die(mysql_error());
-	if ($row=mysql_fetch_array($result)) {
-		return $row[$name];
-	}
-}
-
-function count_mess($cond) {
-	global $con;
-	global $db_prefix;
-	global $user;
-	if ($result = mysql_query("SELECT COUNT(DISTINCT messid) FROM `".$db_prefix."mess` WHERE account='$user' AND ".$cond,$con)); else die(mysql_error());
-	if ($row = mysql_fetch_array($result)) {
-		return $row["COUNT(DISTINCT messid)"];
-	}
-}
-
-$con = mysql_connect($db_host,$db_name,$db_pass);
-if (!$con) {
-  die('Could not connect: ' . mysql_error());
-}
-if (mysql_select_db($db_db, $con)); else die(mysql_error()); 
-session_start();
-
-if ($_POST['username']) {
-	$_SESSION['username'] = $_POST['username'];
-	$_SESSION['password'] = $_POST['password'];
-}
-$user = $_SESSION['username'].$userprefix;
-$uname = $_SESSION['username'];
-$pass = $_SESSION['password'];
-
-$view = $_GET['view'];
-if ($view) $_SESSION['view'] = $view;
-else {
-	$view = $_SESSION['view'];
-	if (!$view) {
-		$view = "inbox";
-		$_SESSION['view'] = "inbox";
-	}
-}
-$folder = "INBOX";
-
-/*
-$folder = $_GET['folder'];
-if ($folder) $_SESSION['folder'] = $folder;
-else {
-	$folder = $_SESSION['folder'];
-	if (!folder) {
-		$folder = "INBOX";
-		$_SESSION['folder'] = "INBOX";
-	}
-}
-*/
-
-if ($_GET['do'] == "ajax") {
-	$msgno = $_POST["msgno"];
-	$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);
-	$header = imap_headerinfo($mbox,$msgno);
-	$body = imap_body($mbox, $msgno);
-	echo enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body));
-	$_SESSION["headers"] = "In-Reply-To: ".$header->message_id."\n";
-	die();
-}
 
 ?>
 <html>
 <head>
 <title>AGPLMail</title>
-<style>
-body {
-	font-family: arial, helvetica, sans-serif;
-}
-a {
-	color: blue;
-}
-h1, h2 {
-	font-family: serif;
-}
-h1 {
-	display: inline;
-}
-#intro {
-	margin-bottom: 16px;
-}
-#sidebar {
-	float: left;
-	width: 100px;
-	margin-right: 27px;
-	margin-top: 16px;
-}
-#sidebar h2 {
-	margin-bottom: 0px;
-}
-#main {
-	margin-left: 127px;
-}
-#main h2 {
-	text-align: center;
-	margin: 0px;
-}
-.ehead, .efoot {
-	font-style: italic;
-	background-color: #AAFFAA;
-	padding: 7px;
-}
-#esend, .econ {
-	margin-left: 16px;
-}
-.emess {
-	border-left: medium solid #AAFFAA;
-	border-right: medium solid #AAFFAA;
-	margin-bottom: 15px;
-}
-#reply {
-	visibility: hidden;
-	position: absolute;
-	top: 0;
-	left: 0;
-}
-#list {
-	border-left: thin solid black;
-	border-right: thin solid black;
-	border-top: thin solid black;
-	border-spacing: 0px;
-}
-#list td {
-	border-bottom: thin solid black;
-	padding: 3px;
-}
-tr.read {
-	background-color: #DDFFDD;
-}
-tr.read_sel, tr.unread_sel {
-	background-color: #FFFFDD;	
-}
-tr.header {
-	background-color: #AAFFAA;
-}
-#notif {
-	background-color: #FFFF55;
-}
-</style>
-<script type="text/javascript" src="ajax.js"></script>
+<link rel>
+<link rel="stylesheet" type="text/css" href="default.css"></script>
 </head>
 <body>
 
@@ -333,85 +83,11 @@ foreach ($folders as $f) {
 
 echo "</div><div id=\"main\">";
 
-function do_action($name,$value,$text) {
-	global $selection;
-	global $convo;
-	global $convos;
-	global $mbox;
-	foreach ($selection as $convo) {
-		foreach ($convos[$convo] as $msgno) {
-			$header = imap_headerinfo($mbox, $msgno);
-			set_mess($header->message_id, $name, $value);
-		}
-	}
-	$notif = sizeof($selection)." message".nice_s(sizeof($selection))." ".$text;
-}
-
 if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
-	$convos = $_SESSION['convos'];
-	$selection = split(",",$_GET['range']);
-	if ($_GET['type'] == "del")
-		do_action("deleted", 1 ,"sent to the bin.");
-	elseif ($_GET['type'] == "undel")
-		do_action("deleted", 0, "restored.");
-	elseif ($_GET['type'] == "realdel") {
-		foreach ($selection as $convo) {
-			foreach ($convos[$convo] as $msgno) {
-				imap_delete($mbox,$msgno);
-			}
-		}
-		imap_expunge($mbox);
-		$notif = sizeof($selection)." message".nice_s(sizeof($selection))." deleted FOREVER.";
-	}
-	elseif ($_GET['type'] == "arc") {
-		do_action("archived", 1, "sent to archive");
-	}
-	elseif ($_GET['type'] == "unarc") {
-		do_action("archived", 0, "returned to inbox");
-	}
-	else {
-		$msglist = "";
-		$first = true;
-		foreach ($selection as $convo) {
-			foreach ($convos[$convo] as $msgno) {
-				if ($first) $first = false;
-				else $msglist .= ",";
-				$msglist .= $msgno;
-			}
-		}
-		if ($_GET['type'] == "read") {
-			imap_setflag_full($mbox,$msglist,"\\Seen");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." marked as read.";
-		}
-		elseif ($_GET['type'] == "unread") {
-			imap_clearflag_full($mbox,$msglist,"\\Seen");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." marked as unread.";
-		}
-		elseif ($_GET['type'] == "star") {
-			imap_setflag_full($mbox,$msglist,"\\Flagged");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." starred.";
-		}
-		elseif ($_GET['type'] == "unstar") {
-			imap_clearflag_full($mbox,$msglist,"\\Flagged");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." unstarred.";
-		}
-	}
+	do_actions();
 }
 
-if ($_GET['do'] == "messaction") {
-	if ($_GET['type'] == "star" || $_GET['type'] == "unstar") {
-		$_GET['do'] = "message";
-	}
-/*	if ($_GET['type'] == "arc") {
-		$view = "arc";
-		$_SESSION['view'] = "arc";
-	}
-	if ($_GET['type'] == "unarc") {
-		$view = "inbox";
-		$_SESSION['view'] = "inbox";
-	} */
-}
-
+########################### Settings ###########################
 if ($_GET['do'] == "settings") {
 	if ($_POST['name']) {
 		add_setting("name",$_POST['name']);
@@ -424,6 +100,7 @@ if ($_GET['do'] == "settings") {
 </form>
 	<?php
 }
+########################### Send Message ###########################
 elseif ($_GET['do'] == "send") {
 #	print_r($_POST);
 #	if ($_SESSION['username'] == "demo") {
@@ -437,10 +114,12 @@ elseif ($_GET['do'] == "send") {
 <h2>Message Sent</h2>
 <a href="<?php echo $me ?>">Return to inbox</a>?
 <?php } #}
+########################### New Message ###########################
 elseif ($_GET['do'] == "new") {
 	echo "<h2>New Email</h2>";
 	echo enewtext("","","","","");
 }
+########################### View Message ###########################
 elseif ($_GET['do'] == "message") {
 	if ($_GET['range']) {
 		$convo = $_GET['range'];
@@ -448,7 +127,6 @@ elseif ($_GET['do'] == "message") {
 	else {
 		$convo = $_GET['convo'];
 	}
-	$convos = $_SESSION['convos'];
 ?>
 <script>
 function moreact(value) {
@@ -479,6 +157,7 @@ function reply<?php echo $e ?>() {
 		$e++;
 	}
 }
+########################### View Folder ###########################
 else {
 	echo "<h2>".nice_view($view)."</h2>\n";
 
@@ -520,13 +199,16 @@ else {
 			$liststart = 0;
 		}
 		
-		if ($view=="inbox") {
+		// This code fails because it counts the number of archived *messages*, not conversations
+		/* if ($view=="inbox") {
 			$arc = count_mess("archived=1 AND deleted=0");
+			print sizeof($convos) ." ". $arc;
 			$total = sizeof($convos) - $arc;
 		}
 		elseif ($view=="arc") {
 			$total = count_mess("archived=1 AND deleted=0");
-		}
+		} */
+		$total = "???";
 		
 		$messrows = array();
 		$i = sizeof($convos);
@@ -561,68 +243,9 @@ else {
 		}
 		$convostart = $i;
 		$listend = $liststart + $count;
-?>
-<script language="javascript">
-	function hili(num,base) {
-		if (document.getElementById("tick"+num).checked == true) {
-			document.getElementById("mess"+num).className = base+"_sel";
-		}
-		else {
-			document.getElementById("mess"+num).className = base;
-		}
-	}
-	function tick(chk,val) {
-		if (chk) {
-			for (i = 0; i < chk.length; i++) {
-				chk[i].checked = val;
-				chk[i].onchange();
-			}
-		}
-	}
-	function selall() {
-		tick(document.form.check_read,true);
-		tick(document.form.check_unread,true);
-	}
-	function selnone() {
-		tick(document.form.check_read,false);
-		tick(document.form.check_unread,false);
-	}
-	function selread() {
-		tick(document.form.check_read,true);
-		tick(document.form.check_unread,false);
-	}
-	function selunread() {
-		tick(document.form.check_unread,true);
-		tick(document.form.check_read,false);
-	}
-	function moreact(value) {
-		range=""
-		i=<?php echo $convostart ?>;
-		first = true;
-		// Big HACK
-		while (i < <?php echo $convoend ?>) {
-			if (document.getElementById("tick"+i)) {
-				if (document.getElementById("tick"+i).checked) {
-					if (first) {
-						first = false;
-					}
-					else {
-						range += ","
-					}
-					range += i;
-				}
-			}
-			i++;
-		}
-		if (range == "") {
-			alert("Please select one or more messages.");
-		}
-		else {
-			location.href = "<?php echo $me ?>?do=listaction&type="+value+"&range="+range;
-		}
-	}
-</script>
-<?php
+
+		echo "<script language=\"javascript\" src=\"list.js\"></script>";
+		echo "<script language=\"javascript\">imin=$convostart; imax=$convoend;</script>";
 		echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
 		echo "<tr class=\"header\"><td colspan=\"4\">".actions()."<br/>Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a></td>";
 		echo "<td>".($liststart+1)." - $listend of $total<br/>";
@@ -635,14 +258,6 @@ else {
 		echo "</form></table>";
 		$_SESSION['convos'] = $convos;
 		
-/*		
-		echo "<h3>Threads</h3>";
-		print_r($threads);
-
-		echo "<h3>Convos</h3>";
-		print_r($_SESSION['convos']);
-*/
-
 	}	
 }
 
@@ -652,7 +267,7 @@ imap_close($mbox);
 
 } } ?>
 
-<br/><br/><a href="http://freedomdreams.co.uk/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="<?php echo $me ?>?do=src">Source Code</a>?
+<br/><br/><a href="http://freedomdreams.co.uk/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">Source Code</a>?
 
 </body>
 </html>

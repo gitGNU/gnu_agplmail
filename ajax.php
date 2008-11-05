@@ -17,14 +17,13 @@
 # along with AGPLMail.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-$db_host = "localhost";
-$db_name = "bjwebb";
-$db_pass = "nottellingyouthis";
-$db_db = "bjwebb";
-$db_prefix = "agplmail_";
-
-$server = "localhost";
-$userprefix = "@freedomdreams.co.uk";
-
-$customhome = "Find out more about AGPLMail at our <a href=\"http://freedomdreams.co.uk/wiki/AGPLMail\">wiki page</a>. If you would like to try it out, use the username demo and password password.";
+include "config.php";
+include "functions.php";
+$msgno = $_POST["msgno"];
+$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);
+$header = imap_headerinfo($mbox,$msgno);
+$body = imap_body($mbox, $msgno);
+echo enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body));
+$_SESSION["headers"] = "In-Reply-To: ".$header->message_id."\n";
+die();
 ?>
