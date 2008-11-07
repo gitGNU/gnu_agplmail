@@ -264,7 +264,7 @@ else {
 				$star = $row['starred'];
 				$tagtext = "";
 				if ($row['archived']==0 && $view!="inbox" && $view!="bin") $tagtext = "<span class=\"inboxtag\">INBOX</span>";
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\" onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
 			}
 		}
 		$count ++;
