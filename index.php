@@ -43,7 +43,15 @@ echo "<br/>".$customhome;
 
 <h2>Login</h2>
 <form method="post" action="<?php echo $me ?>">
-	User: <input name="username"></input><br/>
+	User: <input name="username"></input>
+<?php
+if ($domain) {
+	echo "<select name=\"domain\">";
+	foreach ($domain as $dom) echo "<option value=\"$dom\">$dom</option>";
+	echo "</select>";
+} else echo "<input name=\"domain\"></input>";
+?>
+	<br/>
 	Password: <input name="password" type="password"></input><br/>
 	<button type="submit">Submit</button>
 </form>
@@ -81,17 +89,15 @@ if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
 
 ########################### Settings ###########################
 if ($_GET['do'] == "settings") {
-	if ($_POST['name']) {
-		add_setting("name",$_POST['name']);
-	}
-	if ($_POST['listlen']) {
-		add_setting("listlen",$_POST['listlen']);
-	}
+	if ($_POST['name']) add_setting("name",$_POST['name']);
+	if ($_POST['listlen']) add_setting("listlen",$_POST['listlen']);
+	if ($_POST['sig']) add_setting("sig",$_POST['sig']);
 	?>
 <h2>Settings</h2>
 <form method="post" action="<?php echo $me ?>?do=settings">
 	Name: <input name="name" value="<?php echo get_setting("name"); ?>"></input><br/>
 	Convos per page: <input name="listlen" value="<?php echo get_setting("listlen"); ?>"></input><br/>
+	Signature: <textarea name="sig"><?php echo get_setting("sig"); ?></textarea>
 	<button type="submit">Submit</button>
 </form>
 	<?php

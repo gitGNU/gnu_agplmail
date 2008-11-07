@@ -61,7 +61,7 @@ function enewtext($to, $cc, $bcc, $sub, $con) {
 	CC: <input name=\"cc\" value=\"$cc\"/><br/>
 	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
 	Subject: <input name=\"subject\" value=\"$sub\"><br/>
-	<textarea rows=\"20\" cols=\"60\" name=\"content\">$con</textarea><br/>
+	<textarea rows=\"20\" cols=\"60\" name=\"content\">".$con."\n\n\n".get_setting("sig")."</textarea><br/>
 	<button type=\"submit\">Send<button>
 </form>";
 }
@@ -149,15 +149,6 @@ function do_actions() {
 		do_action("deleted", 1 ,"sent to the bin.",$selection);
 	elseif ($_GET['type'] == "undel")
 		do_action("deleted", 0, "restored.",$selection);
-	elseif ($_GET['type'] == "realdel") {
-		foreach ($selection as $convo) {
-			foreach ($convos[$convo] as $msgno) {
-				imap_delete($mbox,$msgno);
-			}
-		}
-		imap_expunge($mbox);
-		$notif = sizeof($selection)." message".nice_s(sizeof($selection))." deleted FOREVER.";
-	}
 	elseif ($_GET['type'] == "arc") {
 		do_action("archived", 1, "sent to archive",$selection);
 	}
@@ -167,6 +158,7 @@ function do_actions() {
 	else {
 		global $con;
 		global $db_prefix;
+		global $user;
 		$msglist = "";
 		$first = true;
 		foreach ($selection as $convo) {
@@ -174,9 +166,18 @@ function do_actions() {
 			if ($_GET['type'] == "star" || $_GET['type'] == "unstar") $firstonly = "AND pos=1";
 			if ($result = mysql_query("SELECT uid FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user'".$firstonly,$con)); else die(mysql_error());
 			while ($row = mysql_fetch_assoc($result)) {
-				if ($first) $first = false;
-				else $msglist .= ",";
-				$msglist .= imap_msgno($row['uid']);
+				if ($_GET['type'] == "realdel") {
+					imap_delete($mbox,imap_msgno($mbox,$row['uid']));
+				}
+				else {
+					if ($first) $first = false;
+					else $msglist .= ",";
+					$msglist .= imap_msgno($mbox,$row['uid']);
+				}
+			}
+			if ($_GET['type'] == "realdel") {
+				if ($result = mysql_query("DELETE FROM `".$db_prefix."convos` WHERE id=$convo AND account='$user'",$con));
+				if ($result = mysql_query("DELETE FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user'",$con)); else die(mysql_error());
 			}
 		}
 		if ($_GET['type'] == "read") {
@@ -194,6 +195,10 @@ function do_actions() {
 		elseif ($_GET['type'] == "unstar") {
 			imap_clearflag_full($mbox,$msglist,"\\Flagged");
 			do_action("starred", 0, "unstarred",$selection);
+		}
+		elseif ($_GET['type'] == "realdel") {
+			imap_expunge($mbox);
+			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." deleted FOREVER.";
 		}
 	}
 	
@@ -223,9 +228,10 @@ if ($_POST['username']) {
 	$_SESSION['username'] = $_POST['username'];
 	$_SESSION['password'] = $_POST['password'];
 }
-$user = $_SESSION['username'].$userprefix;
+if ($_POST['domain']) $_SESSION['domain'] = $_POST['domain'];
+$user = $_SESSION['username'].$_SESSION['domain'];
 $uname = $_SESSION['username'];
-$pass = $_SESSION['password'];$folder = "INBOX";
+$pass = $_SESSION['password'];
 
 $view = $_GET['view'];
 if ($view) $_SESSION['view'] = $view;
