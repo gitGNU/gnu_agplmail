@@ -64,14 +64,6 @@ echo "<div id=\"intro\">Welcome ".$uname." it is ".date("H:i").". <a href=\"$me?
 echo "<div id=\"sidebar\">";
 echo "<a href=\"$me?do=new\">New Email</a>";
 echo "<h2>Folders</h2>\n";
-/*
-$folders = imap_list($mbox, "{".$server."}", "*");
-
-foreach ($folders as $f) {
-	$f = ereg_replace("\{.*\}","",$f);
-    echo "<a href=\"$me?do=list&folder=".$f."\">".nice_folder($f)."</a><br />\n";
-}
-*/
 ?>
 <a href="<?php echo $me ?>?do=list&pos=0&view=inbox">Inbox</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=arc">Archive</a><br/>
@@ -123,8 +115,7 @@ elseif ($_GET['do'] == "new") {
 elseif ($_GET['do'] == "message") {
 	if ($_GET['range']) {
 		$convo = $_GET['range'];
-	}
-	else {
+	} else {
 		$convo = $_GET['convo'];
 	}
 ?>
@@ -135,9 +126,14 @@ function moreact(value) {
 </script>	
 <?php
 	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br>";
-	$header = imap_headerinfo($mbox,$convos[$convo][0]);
-	echo "<h2>".$header->subject."</h2>";
-	foreach ($convos[$convo] as $key => $msgno) {
+	if ($result = mysql_query("SELECT uid FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
+	$first = true;
+	while ($row = mysql_fetch_assoc($result)) {
+		if ($first) {
+			echo "<h2>".$header->subject."</h2>";
+			$first = false;
+		}
+		$msgno = imap_msgno($mbox,$row['uid']);
 		$header = imap_headerinfo($mbox,$msgno);
 		$body = nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		echo "<div class=\"emess\"><div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
@@ -148,13 +144,12 @@ function moreact(value) {
 #		print_r($header);
 		echo "<div class=\"econ\">".$body."</div>"; ?>
 	<script language="javascript">
-function reply<?php echo $e ?>() {
-	ajax("msgno=<?php echo $msgno ?>", "esend<?php echo $e ?>", false);
+function reply<?php echo $msgno ?>() {
+	ajax("msgno=<?php echo $msgno ?>", "esend<?php echo $msgno ?>", false);
 }
 </script>
-<br/><div class="efoot"><a href="javascript:reply<?php echo $e ?>()">Reply</a> Reply to All Forward</div><div id="esend<?php echo $e ?>"></div></div>
+<br/><div class="efoot"><a href="javascript:reply<?php echo $msgno ?>()">Reply</a> Reply to All Forward</div><div id="esend<?php echo $msgno ?>"></div></div>
 	<?php
-		$e++;
 	}
 }
 ########################### View Folder ###########################
@@ -165,105 +160,105 @@ else {
 		echo "<div id=\"notif\">".$notif."</div>";
 	}
 
-	$status = imap_status($mbox, "{".$server."}".$folder, SA_ALL);
-#	print_r($status);
-#	echo "There are ".$status->messages." messages in the ".nice_inf($folder).".<br><br>\n";
-	if ($status->messages != 0) {
-		$threads = imap_thread($mbox);
-		$self = "$me?do=list&folder=$folder";
-		$threadlen = 0;
-		$convos = array();
-		$i = 0;
-		foreach ($threads as $key => $val) {
-			$tree = explode('.', $key);
-			if ($tree[1] == 'num' && $val != 0) {
-				$threadlen++;
-				$convos[$i][] = $val;
-			} elseif ($tree[1] == 'branch') {
-				if ($threadlen != 0) {
-					$i++;
+	$lastdate = get_setting("lastdate");
+	if ($lastdate != NULL) $datesearch = "SINCE \"$lastdate\"";
+	$mess = imap_sort($mbox, SORTARRIVAL, 0, NULL, $datesearch); 
+	$header = "";
+	foreach ($mess as $msgno) {
+		$header = imap_headerinfo($mbox, $msgno);
+		if ($result = mysql_query("SELECT messid FROM `".$db_prefix."mess` WHERE messid='".mysql_real_escape_string($header->message_id)."' AND account='$user'",$con)); else die(mysql_error());
+		if (!mysql_fetch_array($result)) {
+			if ($header->in_reply_to) {
+				if ($result = mysql_query("SELECT convo FROM `".$db_prefix."mess` WHERE messid='".mysql_real_escape_string($header->in_reply_to)."' AND account='$user'",$con)); else die(mysql_error());
+				if ($row=mysql_fetch_array($result)) {
+					$convoid = $row['convo'];
+					if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
+					if ($row=mysql_fetch_array($result)) {
+						$pos = $row['nomsgs']+1;
+						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
+					} else die("SQL database is insane!");
 				}
-				$threadlen = 0;
+				else {
+					$pos = 1;
+				}
+			}
+			else {
+				$pos = 1;
+			}
+			if ($pos == 1) {
+				$convoid = get_setting("convotick");
+				if (!$convoid) $convoid = 1;
+				add_setting("convotick", $convoid+1);
+				if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id) VALUES('$user', '".date("Y-m-d H:i:s", $header->udate)."', $convoid)")); else die(mysql_error());
+			}
+			if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, uid, messid, pos, convo, date) VALUES('$user', '".imap_uid($mbox, $msgno)."', '".mysql_real_escape_string($header->message_id)."', $pos, $convoid, '".date("Y-m-d H:i:s", $header->udate)."')", $con)); else die(mysql_error());
+		}
+	}
+	add_setting("lastdate", $header->date);
+	
+	$listlen = get_setting("listlen");
+	if (!$listlen) $listlen = 50;
+	if ($_GET['pos'] != "") {
+		$liststart = $_GET['pos'];
+		$_SESSION['pos'] = $_GET['pos'];
+	}
+	elseif ($_SESSION['pos']) {
+		$liststart = $_SESSION['pos'];
+	}
+	else {
+		$liststart = 0;
+	}
+	if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE archived=0 AND deleted=0 AND account='$user'",$con)); else die(mysql_error());
+	if ($row = mysql_fetch_array($result)) {
+		$total = $row["COUNT(*)"];
+	}
+	$listend = $liststart + $listlen;
+	if ($listend > $total) $listend = $total;
+	
+	if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE archived=0 AND deleted=0 AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
+	$count = 0;
+	$first = true;
+	$messrows = array();
+	while ($row = mysql_fetch_assoc($result)) {
+		if ($count < $listlen) {
+			if ($first) {
+				$first = false;
+			} else {
+				$jarray .= ",";
+			}
+			$jarray .= $row['id'];
+			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE convo=".$row['id']." AND pos=1 AND account='$user'",$con)); else die(mysql_error());
+			while ($row2 = mysql_fetch_assoc($result2)) {
+				$header = imap_headerinfo($mbox, imap_msgno($mbox, $row2['uid']));
+				if ($row['read']) $class = "read";
+				else $class = "unread";
+				$i = $row['id'];
+				$star = $row['starred'];
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td><a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
 			}
 		}
-		
-		$listlen = 50;
-		if ($_GET['pos'] != "") {
-			$liststart = $_GET['pos'];
-			$_SESSION['pos'] = $_GET['pos'];
-		}
-		elseif ($_SESSION['pos']) {
-			$liststart = $_SESSION['pos'];
-		}
-		else {
-			$liststart = 0;
-		}
-		
-		// This code fails because it counts the number of archived *messages*, not conversations
-		/* if ($view=="inbox") {
-			$arc = count_mess("archived=1 AND deleted=0");
-			print sizeof($convos) ." ". $arc;
-			$total = sizeof($convos) - $arc;
-		}
-		elseif ($view=="arc") {
-			$total = count_mess("archived=1 AND deleted=0");
-		} */
-		$total = "???";
-		
-		$messrows = array();
-		$i = sizeof($convos);
-		$convoend = $i;
-		$count = 0;
-		$next = true;
-		while ($count < $listlen) {
-			$i--;$convostart = $i;
-			$seen = true;
-			$star = false;
-			$allarchived = true;
-			$del = false;
-			if (!$convos[$i]) {
-				$next = false;
-				break;
-			}
-			foreach($convos[$i] as $val) {
-				$tmpheader = imap_headerinfo($mbox, $val);
-				if ($tmpheader->Unseen == "U" || $tmpheader->Recent == "N") $seen = false;
-				if ($tmpheader->Flagged == "F") $star = true;
-				if (get_mess($tmpheader->message_id, "archived") != 1) $allarchived = false;
-				if (get_mess($tmpheader->message_id, "deleted") == 1) $del = true;
-			}
-			$header = $tmpheader = imap_headerinfo($mbox, $convos[$i][0]);
-			if ( ( ((!$allarchived && $view=="inbox") || ($allarchived && $view=="arc") || ($star && $view=="star")) && !$del )
-				|| ( $del && $view=="bin" )  ) {
-					if ($seen) $class = "read";
-					else $class = "unread";
-					$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".sizeof($convos[$i]).")</td><td><a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date($header->udate)."</td></tr>\n";
-					$count++;
-			}
-		}
-		$convostart = $i;
-		$listend = $liststart + $count;
-
-		echo "<script language=\"javascript\" src=\"list.js\"></script>";
-		echo "<script language=\"javascript\">imin=$convostart; imax=$convoend;</script>";
-		echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
-		echo "<tr class=\"header\"><td colspan=\"4\">".actions()."<br/>Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a></td>";
-		echo "<td>".($liststart+1)." - $listend of $total<br/>";
-		if ($liststart > 0) echo "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
-		if ($next) echo "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
-		echo "</td></tr>";
-		foreach ($messrows as $messrow) {
-			echo $messrow;
-		}
-		echo "</form></table>";
-		$_SESSION['convos'] = $convos;
-		
-	}	
+		$count ++;
+	}
+	
+	echo "<script language=\"javascript\" src=\"list.js\"></script>";
+	echo "<script language=\"javascript\">convoarr = [$jarray]</script>";
+	echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
+	echo "<tr class=\"header\"><td colspan=\"4\">".actions()."<br/>Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a></td>";
+	echo "<td>".($liststart+1)." - $listend of $total<br/>";
+	if ($liststart > 0) echo "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
+	if ($next) echo "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
+	echo "</td></tr>";
+	foreach ($messrows as $messrow) {
+		echo $messrow;
+	}
+	echo "</form></table>";
+	$_SESSION['convos'] = $convos;
 }
 
 echo "</div>";
 
 imap_close($mbox);
+mysql_close($con);
 
 } } ?>
 

@@ -18,7 +18,6 @@
 */
 
 function nice_date($indate) {
-	$now = time();
 	return date("H:i j M",$indate);
 }
 function nice_view($f) {

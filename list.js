@@ -50,9 +50,8 @@ function selunread() {
 }
 function moreact(value) {
 	range=""
-	i=imin;
-	first = true;
-	while (i < imax) {
+	for (i in convoarr) {
+		alert(i);
 		if (document.getElementById("tick"+i)) {
 			if (document.getElementById("tick"+i).checked) {
 				if (first) {
