@@ -16,7 +16,20 @@
 
 -- --------------------------------------------------------
 
--- SQL Table structure for AGPLMail
+-- 
+-- Table structure for table `agplmail_convos`
+-- 
+
+CREATE TABLE `agplmail_convos` (
+  `id` int(11) NOT NULL,
+  `modified` datetime NOT NULL,
+  `archived` tinyint(1) NOT NULL default '0',
+  `deleted` tinyint(1) NOT NULL default '0',
+  `account` text NOT NULL,
+  `starred` tinyint(1) NOT NULL default '0',
+  `read` tinyint(1) NOT NULL,
+  `nomsgs` int(11) NOT NULL default '1'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
