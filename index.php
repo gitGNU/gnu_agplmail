@@ -25,8 +25,8 @@ $me = $_SERVER['SCRIPT_NAME'];
 <html>
 <head>
 <title>AGPLMail</title>
-<link rel>
-<link rel="stylesheet" type="text/css" href="default.css"></script>
+<link rel="stylesheet" type="text/css" href="default.css"></link>
+<script language="javascript" src="ajax.js"></script>
 </head>
 <body>
 
@@ -84,10 +84,14 @@ if ($_GET['do'] == "settings") {
 	if ($_POST['name']) {
 		add_setting("name",$_POST['name']);
 	}
+	if ($_POST['listlen']) {
+		add_setting("listlen",$_POST['listlen']);
+	}
 	?>
 <h2>Settings</h2>
 <form method="post" action="<?php echo $me ?>?do=settings">
 	Name: <input name="name" value="<?php echo get_setting("name"); ?>"></input><br/>
+	Convos per page: <input name="listlen" value="<?php echo get_setting("listlen"); ?>"></input><br/>
 	<button type="submit">Submit</button>
 </form>
 	<?php
@@ -143,7 +147,7 @@ function moreact(value) {
 		echo "Subject: ".$header->subject."</div><br/>";
 #		print_r($header);
 		echo "<div class=\"econ\">".$body."</div>"; ?>
-	<script language="javascript">
+<script language="javascript">
 function reply<?php echo $msgno ?>() {
 	ajax("msgno=<?php echo $msgno ?>", "esend<?php echo $msgno ?>", false);
 }
@@ -151,6 +155,8 @@ function reply<?php echo $msgno ?>() {
 <br/><div class="efoot"><a href="javascript:reply<?php echo $msgno ?>()">Reply</a> Reply to All Forward</div><div id="esend<?php echo $msgno ?>"></div></div>
 	<?php
 	}
+	// Mark the conversation as read in the sql
+	if (mysql_query("UPDATE `".$db_prefix."convos` SET `read`=1 WHERE account='$user' AND id='$convo'", $con)); else die(mysql_error());
 }
 ########################### View Folder ###########################
 else {
@@ -208,19 +214,35 @@ else {
 	else {
 		$liststart = 0;
 	}
-	if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE archived=0 AND deleted=0 AND account='$user'",$con)); else die(mysql_error());
+	
+	if ($view == "arc") {
+	    $cond = "archived=1 AND deleted=0";
+	} elseif ($view == "bin") {
+	    $cond = "deleted=1";
+	} elseif ($view == "star") {
+	    $cond = "starred=1 AND deleted=0";
+	} else {
+	    $cond = "archived=0 AND deleted=0";
+	}
+	
+	if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user'",$con)); else die(mysql_error());
 	if ($row = mysql_fetch_array($result)) {
 		$total = $row["COUNT(*)"];
 	}
 	$listend = $liststart + $listlen;
-	if ($listend > $total) $listend = $total;
+	$next = true;
+	if ($listend > $total) {
+	    $listend = $total;
+	    $next = false;
+	}
 	
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE archived=0 AND deleted=0 AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
-	$count = 0;
+	if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
+	$count = 1;
 	$first = true;
 	$messrows = array();
 	while ($row = mysql_fetch_assoc($result)) {
-		if ($count < $listlen) {
+	    if ($count > $listend) break;
+		if ($count > $liststart) {
 			if ($first) {
 				$first = false;
 			} else {
@@ -262,7 +284,7 @@ mysql_close($con);
 
 } } ?>
 
-<br/><br/><a href="http://freedomdreams.co.uk/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">Source Code</a>?
+<br/><br/><a href="http://freedomdreams.co.uk/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">source code</a>?
 
 </body>
 </html>

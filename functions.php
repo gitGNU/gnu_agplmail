@@ -101,22 +101,11 @@ function get_setting($name) {
 }
 function starpic($star, $convo) {
 	if ($star)
-		return "<a href=\"$me?do=listaction&type=unstar&range=$convo\">[*]</a>";
+		return "<a href=\"$me?do=listaction&type=unstar&range=$convo\"><img src=\"star_fill.png\" alt=\"{*}\" border=\"0\"/></a>";
 	else
-		return "<a href=\"$me?do=listaction&type=star&range=$convo\">[ ]</a>";
+		return "<a href=\"$me?do=listaction&type=star&range=$convo\"><img src=\"star_nofill.png\" alt=\"{ }\" border=\"0\"/></a>";
 }
-function set_mess($messid, $name, $value) {
-	global $con;
-	global $db_prefix;
-	global $user;
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE account='$user' AND messid='$messid'",$con)); else die(mysql_error());
-	if (mysql_fetch_array($result)) {
-		if (mysql_query("UPDATE `".$db_prefix."mess` SET $name=$value WHERE account='$user' AND messid='$messid'", $con)); else die(mysql_error());
-	}
-	else {
-		if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, messid, $name) VALUES('$user', '$messid', $value)", $con)); else die(mysql_error());
-	}
-}
+
 function get_mess($messid, $name) {
 	global $con;
 	global $db_prefix;
@@ -140,11 +129,11 @@ function count_mess($cond) {
 function do_action($name,$value,$text,$selection) {
 	global $convos;
 	global $mbox;
+	global $con;
+	global $db_prefix;
+	global $user;
 	foreach ($selection as $convo) {
-		foreach ($convos[$convo] as $msgno) {
-			$header = imap_headerinfo($mbox, $msgno);
-			set_mess($header->message_id, $name, $value);
-		}
+		if (mysql_query("UPDATE `".$db_prefix."convos` SET `$name`=$value WHERE account='$user' AND id='$convo'", $con)); else die(mysql_error());
 	}
 	$notif = sizeof($selection)." message".nice_s(sizeof($selection))." ".$text;
 }
@@ -176,30 +165,35 @@ function do_actions() {
 		do_action("archived", 0, "returned to inbox",$selection);
 	}
 	else {
+		global $con;
+		global $db_prefix;
 		$msglist = "";
 		$first = true;
 		foreach ($selection as $convo) {
-			foreach ($convos[$convo] as $msgno) {
+			$firstonly = "";
+			if ($_GET['type'] == "star" || $_GET['type'] == "unstar") $firstonly = "AND pos=1";
+			if ($result = mysql_query("SELECT uid FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user'".$firstonly,$con)); else die(mysql_error());
+			while ($row = mysql_fetch_assoc($result)) {
 				if ($first) $first = false;
 				else $msglist .= ",";
-				$msglist .= $msgno;
+				$msglist .= imap_msgno($row['uid']);
 			}
 		}
 		if ($_GET['type'] == "read") {
 			imap_setflag_full($mbox,$msglist,"\\Seen");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." marked as read.";
+			do_action("read", 1, "marked as read",$selection);
 		}
 		elseif ($_GET['type'] == "unread") {
 			imap_clearflag_full($mbox,$msglist,"\\Seen");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." marked as unread.";
+			do_action("read", 0, "marked as unread",$selection);
 		}
 		elseif ($_GET['type'] == "star") {
 			imap_setflag_full($mbox,$msglist,"\\Flagged");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." starred.";
+			do_action("starred", 1, "starred",$selection);
 		}
 		elseif ($_GET['type'] == "unstar") {
 			imap_clearflag_full($mbox,$msglist,"\\Flagged");
-			$notif = sizeof($selection)." message".nice_s(sizeof($selection))." unstarred.";
+			do_action("starred", 0, "unstarred",$selection);
 		}
 	}
 	

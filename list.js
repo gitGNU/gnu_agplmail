@@ -49,18 +49,18 @@ function selunread() {
 	tick(document.form.check_read,false);
 }
 function moreact(value) {
-	range=""
+	range="";
+	first=true;
 	for (i in convoarr) {
-		alert(i);
-		if (document.getElementById("tick"+i)) {
-			if (document.getElementById("tick"+i).checked) {
+		if (document.getElementById("tick"+convoarr[i])) {
+			if (document.getElementById("tick"+convoarr[i]).checked) {
 				if (first) {
 					first = false;
 				}
 				else {
-					range += ","
+					range += ",";
 				}
-				range += i;
+				range += convoarr[i];
 			}
 		}
 		i++;
@@ -69,6 +69,6 @@ function moreact(value) {
 		alert("Please select one or more messages.");
 	}
 	else {
-		location.href = "index?do=listaction&type="+value+"&range="+range;
+		location.href = "index.php?do=listaction&type="+value+"&range="+range;
 	}
 }

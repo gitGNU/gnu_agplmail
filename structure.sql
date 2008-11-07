@@ -25,10 +25,12 @@
 -- 
 
 CREATE TABLE `agplmail_mess` (
-  `messid` text NOT NULL,
-  `archived` tinyint(1) NOT NULL,
-  `tags` mediumtext NOT NULL,
-  `account` text NOT NULL,
+  `account` varchar(100) NOT NULL,
+  `uid` int(11) NOT NULL,
+  `messid` varchar(200) NOT NULL,
+  `pos` int(11) NOT NULL default '1',
+  `convo` int(11) NOT NULL,
+  `date` datetime NOT NULL,
   `deleted` tinyint(1) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -42,5 +44,15 @@ CREATE TABLE `agplmail_settings` (
   `account` text NOT NULL,
   `name` text NOT NULL,
   `value` text NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `agplmail_test`
+-- 
+
+CREATE TABLE `agplmail_test` (
+  `test` varchar(50) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
