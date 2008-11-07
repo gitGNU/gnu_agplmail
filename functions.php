@@ -75,7 +75,10 @@ function actions() {
 		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('realdel')\">Delete Forever</button> <button type=\"button\" onClick=\"javascript:moreact('undel')\">Restore</button>";
 	else
 		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
-	$atext .= " <select><option>More Actions</option><option onClick=\"javascript:moreact('read')\">Mark as Read</option><option onClick=\"javascript:moreact('unread')\">Mark as Unread</option><option onClick=\"javascript:moreact('star')\">Add star</option><option onClick=\"javascript:moreact('unstar')\">Remove star</option></select> <a href=\"$self\">Refresh</a>";
+	$atext .= "<select><option>More Actions</option>";
+	if ($view == "arc") $atext .= "<option onClick=\"javascript:moreact('arc')\">Archive</option>";
+	elseif ($view!="inbox" && $view!="bin") $atext .= "<option onClick=\"javascript:moreact('unarc')\">Move to Inbox</option><option onClick=\"javascript:moreact('arc')\">Archive</option>";
+	$atext .= "<option onClick=\"javascript:moreact('read')\">Mark as Read</option><option onClick=\"javascript:moreact('unread')\">Mark as Unread</option><option onClick=\"javascript:moreact('star')\">Add star</option><option onClick=\"javascript:moreact('unstar')\">Remove star</option></select> <a href=\"$self\">Refresh</a>";
 	return $atext;
 }
 function add_setting($name, $value) {

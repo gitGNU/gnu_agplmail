@@ -74,7 +74,7 @@ echo "<a href=\"$me?do=new\">New Email</a>";
 echo "<h2>Folders</h2>\n";
 ?>
 <a href="<?php echo $me ?>?do=list&pos=0&view=inbox">Inbox</a><br/>
-<a href="<?php echo $me ?>?do=list&pos=0&view=arc">Archive</a><br/>
+<a href="<?php echo $me ?>?do=list&pos=0&view=arc">All Mail</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=star">Starred</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=bin">Bin</a><br/>
 <br/>
@@ -222,7 +222,7 @@ else {
 	}
 	
 	if ($view == "arc") {
-	    $cond = "archived=1 AND deleted=0";
+	    $cond = "deleted=0";
 	} elseif ($view == "bin") {
 	    $cond = "deleted=1";
 	} elseif ($view == "star") {
@@ -262,7 +262,9 @@ else {
 				else $class = "unread";
 				$i = $row['id'];
 				$star = $row['starred'];
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td><a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
+				$tagtext = "";
+				if ($row['archived']==0 && $view!="inbox" && $view!="bin") $tagtext = "<span class=\"inboxtag\">INBOX</span>";
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
 			}
 		}
 		$count ++;
