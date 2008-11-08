@@ -26,5 +26,5 @@ $db_prefix = "agplmail_";
 $server = "localhost";
 $userprefix = array("@freedomdreams.co.uk", "@freedomsocks.co.uk");
 
-$customhome = "Find out more about AGPLMail at our <a href=\"http://freedomdreams.co.uk/wiki/AGPLMail\">wiki page</a>. If you would like to try it out, use the username demo and password password.";
+$customhome = "Welcome to <a href=\"http://freedomdreams.co.uk/wiki/AGPLMail\">AGPLMail</a>.";
 ?>
