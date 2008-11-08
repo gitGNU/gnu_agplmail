@@ -198,7 +198,7 @@ else {
 					if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
 					if ($row=mysql_fetch_array($result)) {
 						$pos = $row['nomsgs']+1;
-						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos read=0 WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
+						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos, `read`=0 WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
 					} else die("SQL database is insane!");
 				}
 				else {
