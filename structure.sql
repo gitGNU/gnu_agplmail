@@ -62,10 +62,12 @@ CREATE TABLE `agplmail_settings` (
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `agplmail_test`
+-- Table structure for table `agplmail_tags`
 -- 
 
-CREATE TABLE `agplmail_test` (
-  `test` varchar(50) NOT NULL
+CREATE TABLE `agplmail_tags` (
+  `account` varchar(100) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `convo` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 

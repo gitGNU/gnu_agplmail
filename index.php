@@ -27,6 +27,7 @@ $me = $_SERVER['SCRIPT_NAME'];
 <title>AGPLMail</title>
 <link rel="stylesheet" type="text/css" href="default.css"></link>
 <script language="javascript" src="ajax.js"></script>
+<script language="javascript" src="main.js"></script>
 </head>
 <body>
 
@@ -67,7 +68,11 @@ if (!$mbox) {
 <?php }
 else {
 
-echo "<div id=\"intro\">Welcome ".$uname." it is ".date("H:i").". <a href=\"$me?do=logout\">Logout</a>?</div>";
+if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
+	do_actions();
+}
+
+echo "<div id=\"intro\">Welcome ".get_setting("name").", it is ".date("H:i").". <a href=\"$me?do=logout\">Logout</a>?</div>";
 
 echo "<div id=\"sidebar\">";
 echo "<a href=\"$me?do=new\">New Email</a>";
@@ -79,13 +84,16 @@ echo "<h2>Folders</h2>\n";
 <a href="<?php echo $me ?>?do=list&pos=0&view=bin">Bin</a><br/>
 <br/>
 <a href="<?php echo $me ?>?do=settings">Settings</a><br/>
+<br/>
+<h2>Tags</h2>
 <?php
+if ($result = mysql_query("SELECT DISTINCT name FROM `".$db_prefix."tags` WHERE account='$user'",$con)); else die(mysql_error());
+while ($row=mysql_fetch_array($result)) {
+	echo "<a href=\"?do=list&pos=0&view=tag&name=".$row["name"]."\">".$row["name"]."</a><br/>";
+}
+
 
 echo "</div><div id=\"main\">";
-
-if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
-	do_actions();
-}
 
 ########################### Settings ###########################
 if ($_GET['do'] == "settings") {
@@ -131,7 +139,10 @@ elseif ($_GET['do'] == "message") {
 ?>
 <script>
 function moreact(value) {
-	location.href = "<?php echo $me ?>?do=messaction&type="+value+"&range="+"<?php echo $convo ?>";
+	do_actions(value, "", "<?php echo $convo ?>")
+}
+function moreacts(vaule,tagname) {
+	do_actions(value, tagname, "<?php echo $convo ?>");
 }
 </script>	
 <?php
@@ -187,7 +198,7 @@ else {
 					if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
 					if ($row=mysql_fetch_array($result)) {
 						$pos = $row['nomsgs']+1;
-						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
+						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos read=0 WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
 					} else die("SQL database is insane!");
 				}
 				else {
@@ -231,10 +242,17 @@ else {
 	    $cond = "archived=0 AND deleted=0";
 	}
 	
-	if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user'",$con)); else die(mysql_error());
+	if ($view == "tag") {
+		if ($result = mysql_query("SELECT DISTINCT COUNT(*) FROM `".$db_prefix."tags` WHERE name='".$_GET['name']."' AND account='$user'",$con)); else die(mysql_error());
+	} else {	
+		if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user'",$con)); else die(mysql_error());
+	}
 	if ($row = mysql_fetch_array($result)) {
 		$total = $row["COUNT(*)"];
-	}
+	}if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
+	do_actions();
+}
+
 	$listend = $liststart + $listlen;
 	$next = true;
 	if ($listend > $total) {
@@ -242,7 +260,13 @@ else {
 	    $next = false;
 	}
 	
-	if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
+	if ($view == "tag") {
+		if ($result = mysql_query("SELECT DISTINCT * FROM `".$db_prefix."tags` WHERE name='".$_GET['name']."' AND account='$user'",$con)); else die(mysql_error());
+		$convotitle = "convo";
+	} else {
+		if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
+		$convotitle = "id";
+	}
 	$count = 1;
 	$first = true;
 	$messrows = array();
@@ -254,17 +278,22 @@ else {
 			} else {
 				$jarray .= ",";
 			}
-			$jarray .= $row['id'];
-			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE convo=".$row['id']." AND pos=1 AND account='$user'",$con)); else die(mysql_error());
+			$jarray .= $row[$convotitle];
+			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE convo=".$row[$convotitle]." AND pos=1 AND account='$user'",$con)); else die(mysql_error());
 			while ($row2 = mysql_fetch_assoc($result2)) {
 				$header = imap_headerinfo($mbox, imap_msgno($mbox, $row2['uid']));
 				if ($row['read']) $class = "read";
 				else $class = "unread";
-				$i = $row['id'];
+				$i = $row[$convotitle];
 				$star = $row['starred'];
 				$tagtext = "";
-				if ($row['archived']==0 && $view!="inbox" && $view!="bin") $tagtext = "<span class=\"inboxtag\">INBOX</span>";
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\" onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\">".$header->fromaddress." (".$row['nomsgs'].")</td><td>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\">".nice_date(strtotime($row['modified']))."</td></tr>\n";
+				if ($row['archived']==0 && $view!="inbox" && $view!="bin") $tagtext .= "<span class=\"inboxtag\">INBOX</span>";
+				if ($result3 = mysql_query("SELECT DISTINCT name FROM `".$db_prefix."tags` WHERE account='$user' AND convo='$i'",$con)); else die(mysql_error());
+				while ($row3=mysql_fetch_array($result3)) {
+					$tagtext .= " <span class=\"normaltag\">".$row3["name"]."</span>";
+				}			
+				$jlink = "onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"";
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".$header->fromaddress." (".$row['nomsgs'].")</td><td $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>".nice_date(strtotime($row['modified']))."</td></tr>\n";
 			}
 		}
 		$count ++;

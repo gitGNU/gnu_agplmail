@@ -25,6 +25,11 @@ function nice_view($f) {
 	elseif ($f == "arc") return "Archive";
 	elseif ($f == "star") return "Starred";
 	elseif ($f == "bin") return "Bin";
+	elseif ($f == "tag") {
+		// TODO clean up this
+		global $_GET;
+		return "Tag: ".$_GET['name'];
+	}
 	else return $f;
 }
 function nice_addr_list($list) {
@@ -67,18 +72,32 @@ function enewtext($to, $cc, $bcc, $sub, $con) {
 }
 function actions() {
 	global $view;
+	// TODO making all this global is silly
+	global $_GET;
+	$atext = "";
 	if ($view == "inbox")
-		$atext = "<button type=\"button\" onClick=\"javascript:moreact('arc')\">Archive</button>";
+		$atext .= "<button type=\"button\" onClick=\"javascript:moreact('arc')\">Archive</button>";
 	elseif ($view == "arc")
-		$atext = "<button type=\"button\" onClick=\"javascript:moreact('unarc')\">Move to Inbox</button>";
+		$atext .= "<button type=\"button\" onClick=\"javascript:moreact('unarc')\">Move to Inbox</button>";
+	elseif ($view == "tag")
+		$atext .= "<button type=\"button\" onClick=\"javascript:moreacts('untag','".$_GET['name']."')\">Remove tag</button>";
 	if ($view == "bin")
 		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('realdel')\">Delete Forever</button> <button type=\"button\" onClick=\"javascript:moreact('undel')\">Restore</button>";
 	else
 		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
-	$atext .= "<select><option>More Actions</option>";
-	if ($view == "arc") $atext .= "<option onClick=\"javascript:moreact('arc')\">Archive</option>";
-	elseif ($view!="inbox" && $view!="bin") $atext .= "<option onClick=\"javascript:moreact('unarc')\">Move to Inbox</option><option onClick=\"javascript:moreact('arc')\">Archive</option>";
-	$atext .= "<option onClick=\"javascript:moreact('read')\">Mark as Read</option><option onClick=\"javascript:moreact('unread')\">Mark as Unread</option><option onClick=\"javascript:moreact('star')\">Add star</option><option onClick=\"javascript:moreact('unstar')\">Remove star</option></select> <a href=\"$self\">Refresh</a>";
+	$atext .= " <select><option>More Actions</option>";
+	if ($view == "arc") $atext .= "<option onClick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
+	elseif ($view!="inbox" && $view!="bin") $atext .= "<option onClick=\"javascript:moreact('unarc')\">&nbsp;&nbsp;Move to Inbox</option><option onClick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
+	$atext .= "<option onClick=\"javascript:moreact('read')\">&nbsp;&nbsp;Mark as Read</option><option onClick=\"javascript:moreact('unread')\">&nbsp;&nbsp;Mark as Unread</option><option onClick=\"javascript:moreact('star')\">&nbsp;&nbsp;Add star</option><option onClick=\"javascript:moreact('unstar')\">&nbsp;&nbsp;Remove star</option>";
+	$atext .= "<option>Add Tag</option><option onClick=\"moreacts('newtag','')\">&nbsp;&nbsp;New Tag...</option>";
+	global $con;
+	global $db_prefix;
+	global $user;
+	if ($result = mysql_query("SELECT DISTINCT name FROM `".$db_prefix."tags` WHERE account='$user'",$con)); else die(mysql_error());
+	while($row=mysql_fetch_array($result)) {
+		$atext .= "<option onClick=\"moreacts('tag','".$row["name"]."')\">&nbsp;&nbsp;".$row["name"]."</option>";
+	}
+	$atext .= "</select> <a href=\"$self\">Refresh</a>";
 	return $atext;
 }
 function add_setting($name, $value) {
@@ -130,8 +149,6 @@ function count_mess($cond) {
 }
 
 function do_action($name,$value,$text,$selection) {
-	global $convos;
-	global $mbox;
 	global $con;
 	global $db_prefix;
 	global $user;
@@ -141,23 +158,49 @@ function do_action($name,$value,$text,$selection) {
 	$notif = sizeof($selection)." message".nice_s(sizeof($selection))." ".$text;
 }
 
+function tag($name,$selection) {
+	if ($name) {
+		global $con;
+		global $db_prefix;
+		global $user;
+		foreach ($selection as $convo) {
+			if (mysql_query("INSERT INTO `".$db_prefix."tags` (account, name, convo) VALUES('$user', '$name', '$convo')", $con)); else die(mysql_error());
+		}
+		$notif = sizeof($selection)." message".nice_s(sizeof($selection))." have been tagged ".$name.".";
+	}
+}
+
+function untag($name,$selection) {
+	if ($name) {
+		global $con;
+		global $db_prefix;
+		global $user;
+		foreach ($selection as $convo) {
+			if (mysql_query("DELETE FROM `".$db_prefix."tags` WHERE name='$name' AND convo='$convo'", $con)); else die(mysql_error());
+		}
+		$notif = sizeof($selection)." message".nice_s(sizeof($selection))." have had the tag ".$name." removed.";
+	}
+}
 
 function do_actions() {
 	global $_SESSION;
 	global $_GET;
 	global $mbox;
 	$convos = $_SESSION['convos'];
-	$selection = split(",",$_GET['range']);
-	if ($_GET['type'] == "del")
+	$selection = split(",",$_GET['range']);	
+	if ($_GET['type'] == "del") {
 		do_action("deleted", 1 ,"sent to the bin.",$selection);
-	elseif ($_GET['type'] == "undel")
+	} elseif ($_GET['type'] == "undel") {
 		do_action("deleted", 0, "restored.",$selection);
-	elseif ($_GET['type'] == "arc") {
+	} elseif ($_GET['type'] == "arc") {
 		do_action("archived", 1, "sent to archive",$selection);
-	}
-	elseif ($_GET['type'] == "unarc") {
+	} elseif ($_GET['type'] == "unarc") {
 		do_action("archived", 0, "returned to inbox",$selection);
-	}
+	} elseif ($_GET['type'] == "tag") {
+		tag($_GET['name'],$selection);
+	} elseif ($_GET['type'] == "untag") {
+		untag($_GET['name'],$selection);
+	} 
 	else {
 		global $con;
 		global $db_prefix;
@@ -206,17 +249,9 @@ function do_actions() {
 	}
 	
 	if ($_GET['do'] == "messaction") {
-		if ($_GET['type'] == "star" || $_GET['type'] == "unstar") {
+		if ($_GET['type'] == "star" || $_GET['type'] == "unstar" || $_GET['type'] == "tag") {
 			$_GET['do'] = "message";
 		}
-	/*	if ($_GET['type'] == "arc") {
-			$view = "arc";
-			$_SESSION['view'] = "arc";
-		}
-		if ($_GET['type'] == "unarc") {
-			$view = "inbox";
-			$_SESSION['view'] = "inbox";
-		} */
 	}
 }
 

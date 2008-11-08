@@ -49,6 +49,9 @@ function selunread() {
 	tick(document.form.check_read,false);
 }
 function moreact(value) {
+	moreacts(value,"");
+}
+function moreacts(value,tagname) {
 	range="";
 	first=true;
 	for (i in convoarr) {
@@ -69,6 +72,6 @@ function moreact(value) {
 		alert("Please select one or more messages.");
 	}
 	else {
-		location.href = "index.php?do=listaction&type="+value+"&range="+range;
+		do_actions(value, tagname, range);
 	}
 }
