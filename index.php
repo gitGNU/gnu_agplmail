@@ -156,13 +156,63 @@ function moreacts(vaule,tagname) {
 		}
 		$msgno = imap_msgno($mbox,$row['uid']);
 		$header = imap_headerinfo($mbox,$msgno);
-		$body = nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
+		
+		$body = "";
+		$struct = imap_fetchstructure($mbox,$msgno);
+		$charset = "";
+		if ($struct->type == 0) {
+			$body = nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
+		} else {
+			$i = 0;
+			foreach ($struct->parts as $part) {
+				$i++;
+				if ($part->parts) {
+					$j = 0;
+					foreach ($part->parts as $part2) {
+						$j++;
+						if ($part2->subtype == "HTML") {
+							$sect[$part2->subtype] = $i.".".$j;
+							$avail[$part2->subtype] = true;
+							$enc[$part2->subtype] = $part2->encoding;
+							if ($part2->parameters) {
+								foreach ($part2->parameters as $par) {
+									if ($par->attribute == "charset") $charset[$part2->subtype] = $par->value;
+								}
+							}
+						}
+					}
+				}
+				if ($part->subtype == "HTML" || $part->subtype == "PLAIN") {
+					$sect[$part->subtype] = $i;
+					$avail[$part->subtype] = true;
+					$enc[$part->subtype] = $part->encoding;
+					if ($part->parameters) {
+						foreach ($part->parameters as $par) {
+							if ($par->attribute == "charset") $charset[$part->subtype] = $par->value;
+						}
+					}
+				}
+			}
+			if ($avail["HTML"]) $mode = "HTML";
+			else $mode = "PLAIN";
+			$wantedpart = $sect[$mode];
+			if (!$wantedpart) $body = imap_body($mbox, $msgno);
+			else {
+				$body = imap_fetchbody($mbox, $msgno, $wantedpart);
+				if ($enc[$mode] == 3) $body = imap_base64($body);
+				if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
+				if ($mode == "PLAIN") $body = nl2br($body);
+			}
+			#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
+		}
+		
 		echo "<div class=\"emess\"><div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
 		if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
 		if ($header->cc) echo "CC: ".nice_addr_list($header->cc)."<br/>";
 		echo "Date: ".date("j F Y H:i",$header->udate)."<br/>";
-		echo "Subject: ".$header->subject."</div><br/>";
+		echo "Subject: ".decode_qprint($header->subject)."</div><br/>";
 #		print_r($header);
+#		print_r($struct);
 		echo "<div class=\"econ\">".$body."</div>"; ?>
 <script language="javascript">
 function reply<?php echo $msgno ?>() {
@@ -293,24 +343,26 @@ else {
 					$tagtext .= " <span class=\"normaltag\">".$row3["name"]."</span>";
 				}			
 				$jlink = "onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"";
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".$header->fromaddress." (".$row['nomsgs'].")</td><td $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\" width=\"55%\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>".nice_date(strtotime($row['modified']))."</td></tr>\n";
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".nice_list_from($header->from)." (".$row['nomsgs'].")</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>".nice_date(strtotime($row['modified']))."</td></tr>\n";
 			}
 		}
 		$count ++;
 	}
 	
+	$navi = ($liststart+1)." - $listend of $total<br/>";
+	if ($liststart > 0) $navi .= "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
+	if ($next) $navi .= "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
+	$actions = actions();
+	$selecttools = "Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a>";
+	
 	echo "<script language=\"javascript\" src=\"list.js\"></script>";
 	echo "<script language=\"javascript\">convoarr = [$jarray]</script>";
 	echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
-	echo "<tr class=\"header\"><td colspan=\"4\">".actions()."<br/>Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a></td>";
-	echo "<td>".($liststart+1)." - $listend of $total<br/>";
-	if ($liststart > 0) echo "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
-	if ($next) echo "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
-	echo "</td></tr>";
+	echo "<tr class=\"header\"><td colspan=\"4\">$actions<br/>$selecttools</td><td colspan=\"2\" align=\"right\">$navi</td></tr>\n";
 	foreach ($messrows as $messrow) {
 		echo $messrow;
 	}
-	echo "</form></table>";
+	echo "<tr class=\"header\"><td colspan=\"4\">$selecttools<br/>$actions</td><td colspan=\"2\" align=\"right\">$navi</td></tr></form></table>\n";
 	$_SESSION['convos'] = $convos;
 }
 

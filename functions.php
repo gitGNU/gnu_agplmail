@@ -38,7 +38,7 @@ function nice_addr_list($list) {
 	foreach ($list as $item) {
 		if ($first) $first = false;
 		else $strout .= ", ";
-		$strout .= $item->personal." &lt;".$item->mailbox."@".$item->host."&gt;";
+		$strout .= decode_qprint($item->personal)." &lt;".$item->mailbox."@".$item->host."&gt;";
 	}
 	return $strout;
 }
@@ -48,7 +48,7 @@ function nice_re($sub) {
 	else return "Re: ".$sub;
 }
 function nice_subject($sub) {
-	if ($sub) return $sub;
+	if ($sub) return decode_qprint($sub);
 	else return "(no subject)";
 }
 function nice_s($num) {
@@ -57,6 +57,15 @@ function nice_s($num) {
 	else
 		return "s";
 }
+function nice_list_from($list) {
+	$from = $list[0]->personal;
+	if (!$from) $from = $list[0]->mailbox."@".$list[0]->host;
+	return decode_qprint($from);
+}
+function decode_qprint($text) {
+	return htmlentities(imap_utf8($text),ENT_QUOTES,"UTF-8");
+}
+
 function indent($mess) {
 	return "> ".ereg_replace("\n","\n> ",$mess);
 }
