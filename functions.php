@@ -62,6 +62,18 @@ function nice_list_from($list) {
 	if (!$from) $from = $list[0]->mailbox."@".$list[0]->host;
 	return decode_qprint($from);
 }
+function nice_plain($text) {
+	$split = preg_split("!([/\w\-\.\?\&\=\#]{3,}:/{2}[\w\.]{2,}[/\w\-\.\?\&\=\#]*)!e", $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+	$out = "";
+	foreach ($split as $key => $bit) {
+		if ($key%2) {
+			$out .= "<a href=\"$bit\">$bit</a>";
+		} else {
+			$out .= htmlspecialchars($bit);
+		}
+	}
+	return nl2br($out);
+}
 function decode_qprint($text) {
 	return htmlentities(imap_utf8($text),ENT_QUOTES,"UTF-8");
 }
@@ -262,6 +274,32 @@ function do_actions() {
 		if ($_GET['type'] == "star" || $_GET['type'] == "unstar" || $_GET['type'] == "tag") {
 			$_GET['do'] = "message";
 		}
+	}
+}
+
+function partloop($parts,$level) {
+	global $sect;
+	global $avail;
+	global $enc;
+	global $charset;
+	global $count;
+	if (!$parts) return true;
+	foreach ($parts as $part) {
+		$count[$level]++;
+		if ($part->subtype == "HTML" || $part->subtype == "PLAIN") {
+			for ($i=1; $i<$level; $i++) {
+				$sect[$part->subtype] .= $count[$i].".";
+			}
+			$sect[$part->subtype] .= $count[$level];
+			$avail[$part->subtype] = true;
+			$enc[$part->subtype] = $part->encoding;
+			if ($part->parameters) {
+				foreach ($part->parameters as $par) {
+					if ($par->attribute == "charset") $charset[$part->subtype] = $par->value;
+				}
+			}
+		}
+		partloop($part->parts,$level+1);
 	}
 }
 

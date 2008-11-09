@@ -163,37 +163,14 @@ function moreacts(vaule,tagname) {
 		$msgno = imap_msgno($mbox,$row['uid']);
 		$header = imap_headerinfo($mbox,$msgno);
 		
-		function partloop($parts,$level) {
-			global $sect;
-			global $avail;
-			global $enc;
-			global $charset;
-			global $count;
-			if (!$parts) return true;
-			foreach ($parts as $part) {
-				$count[$level]++;
-				if ($part->subtype == "HTML" || $part->subtype == "PLAIN") {
-					for ($i=1; $i<$level; $i++) {
-						$sect[$part->subtype] .= $count[$i].".";
-					}
-					$sect[$part->subtype] .= $count[$level];
-					$avail[$part->subtype] = true;
-					$enc[$part->subtype] = $part->encoding;
-					if ($part->parameters) {
-						foreach ($part->parameters as $par) {
-							if ($par->attribute == "charset") $charset[$part->subtype] = $par->value;
-						}
-					}
-				}
-				partloop($part->parts,$level+1);
-			}
-		}
 		$body = "";
 		$struct = imap_fetchstructure($mbox,$msgno);
-		$charset = "";
+		$sect = array();
+		$avail = array();
+		$enc = array();
+		$charset = array();
 		$count = array();
-		partloop(array($struct),0);
-			
+		partloop(array($struct),0);	
 			
 		if ($avail["HTML"]) $mode = "HTML";
 		else $mode = "PLAIN";
@@ -203,7 +180,7 @@ function moreacts(vaule,tagname) {
 			$body = imap_fetchbody($mbox, $msgno, $wantedpart);
 			if ($enc[$mode] == 3) $body = imap_base64($body);
 			if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
-			if ($mode == "PLAIN") $body = nl2br(htmlspecialchars($body));
+			if ($mode == "PLAIN") $body = nice_plain($body);
 		}
 		#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		
