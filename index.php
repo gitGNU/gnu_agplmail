@@ -101,12 +101,15 @@ if ($_GET['do'] == "settings") {
 	if ($_POST['name']) add_setting("name",$_POST['name']);
 	if ($_POST['listlen']) add_setting("listlen",$_POST['listlen']);
 	if ($_POST['sig']) add_setting("sig",$_POST['sig']);
+	add_setting("html",$_POST['html']);
 	?>
 <h2>Settings</h2>
 <form method="post" action="<?php echo $me ?>?do=settings">
 	Name: <input name="name" value="<?php echo get_setting("name"); ?>"></input><br/>
 	Convos per page: <input name="listlen" value="<?php echo get_setting("listlen"); ?>"></input><br/>
-	Signature: <textarea name="sig"><?php echo get_setting("sig"); ?></textarea>
+	<?php if (get_setting("html") == "false") $pc = " checked"; else $hc = " checked";
+	?> Message composition format: Plain:<input type="radio" name="html" value="false"<?php echo $pc; ?>> HTML:<input type="radio" name="html" value="true"<?php echo $hc; ?>><br/>
+	Signature: <textarea name="sig" style="width: 50%; height: 100px;"><?php echo get_setting("sig"); ?></textarea>
 	<button type="submit">Submit</button>
 </form>
 	<?php
@@ -119,12 +122,15 @@ elseif ($_GET['do'] == "send") {
 #		$_SESSION["headers"] = "";
 #	}
 #	else {
-		
-$part["type"] = TYPETEXT;
-$part["subtype"] = "HTML";
-$part["description"] = "test";
-$part["contents.data"] = $_POST["content"];
-		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"]."Content-Type: text/html; charset=\"utf-8\"\n".imap_mail_compose(array(), array($part)), $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
+		$part["type"] = TYPETEXT;
+		if ($_POST["html"] == "true") {
+			$part["subtype"] = "HTML";
+		} else {
+			$part["subtype"] = "PLAIN";
+		}
+		$part["description"] = "test";
+		$part["contents.data"] = $_POST["content"];
+		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"].imap_mail_compose(array(), array($part)), $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
 		$_SESSION["headers"] = "";
 ?>
 <h2>Message Sent</h2>

@@ -82,15 +82,24 @@ function indent($mess) {
 	return "> ".ereg_replace("\n","\n> ",$mess);
 }
 function enewtext($to, $cc, $bcc, $sub, $con) {
-	return "<form method=\"post\" action=\"$me?do=send\" id=\"form\">
+	$html = get_setting("html");
+	if ($html == false) {
+		$sig = "\n\n\n".get_setting("sig");
+	} else {
+		$sig = "<br /><br />".nl2br(get_setting("sig"));
+	}
+	$text = "<form method=\"post\" action=\"index.php?do=send\" id=\"form\">
 	To: <input name=\"to\" value=\"$to\"/><br/>
 	CC: <input name=\"cc\" value=\"$cc\"/><br/>
 	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
 	Subject: <input name=\"subject\" value=\"$sub\"><br/>
-	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con."\n\n\n".get_setting("sig")."</textarea><br/>
-	<script langua=\"javascript\">makeWhizzyWig('messe', 'all')</script>
-	<button type=\"submit\">Send<button>
-</form>";
+	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con.$sig."</textarea><br/>";
+	if ($html != "false") {
+	$text .= "<script language=\"javascript\">makeWhizzyWig('messe', 'all');
+	document.write('<input name=\"html\" value=\"true\" style=\"visibility: hidden; position:absolute;\"/>')</script>";
+	}
+	$text .= "<button type=\"submit\">Send<button></form>";
+	return $text;
 }
 function actions() {
 	global $view;
