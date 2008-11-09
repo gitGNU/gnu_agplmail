@@ -208,12 +208,12 @@ function moreacts(vaule,tagname) {
 #		print_r($header);
 #		print_r($struct);
 		echo "<div class=\"econ\">".$body."</div>"; ?>
-<script language="javascript">
-function reply<?php echo $msgno ?>() {
-	ajax("msgno=<?php echo $msgno ?>", "esend<?php echo $msgno ?>", false);
-}
-</script>
-<br/><div class="efoot"><a href="javascript:reply<?php echo $msgno ?>()">Reply</a> Reply to All Forward</div><div id="esend<?php echo $msgno ?>"></div></div>
+<br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div><?php 
+	if ($_GET['reply'] == $row['uid']) {
+		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body))."</div>";
+		$_SESSION["headers"] = "In-Reply-To: ".$header->message_id."\n";
+	}
+?></div>
 	<?php
 	}
 	// Mark the conversation as read in the sql

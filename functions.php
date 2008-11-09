@@ -78,7 +78,11 @@ function decode_qprint($text) {
 }
 
 function indent($mess) {
-	return "> ".ereg_replace("\n","\n> ",$mess);
+	if (get_setting("html") == "false") {
+		return "> ".ereg_replace("\n","\n> ",$mess);
+	} else {
+		return "<blockquote>".$mess."</blockquote>";
+	}
 }
 function enewtext($to, $cc, $bcc, $sub, $con) {
 	$html = get_setting("html");
