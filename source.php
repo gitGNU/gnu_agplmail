@@ -31,7 +31,7 @@ if ($_GET['page'] == "") { ?>
 <a href="source.php?page=source.php">source.php</a><br/>
 <a href="star_fill.png">star_fill.png</a><br/>
 <a href="star_nofill.png">star_nofill.png</a><br/>
-<a href="structure.sql">structure.sql</a>
+<a href="structure.sql">structure.sql</a><br/>
 <a href="whizzywig.js">whizzywig.js</a><br/>
 <?php }
 elseif ($_GET['page'] == "index.php" || $_GET['page'] == "functions.php" || $_GET['page'] == "ajax.php" || $_GET['page'] == "config.php.example") {

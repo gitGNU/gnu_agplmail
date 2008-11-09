@@ -286,20 +286,25 @@ function do_actions() {
 	}
 }
 
+function partname($count,$level) {
+	for ($i=1; $i<$level; $i++) {
+		$out .= $count[$i].".";
+	}
+	$out .= $count[$level];
+	return $out;
+}
 function partloop($parts,$level) {
 	global $sect;
 	global $avail;
 	global $enc;
 	global $charset;
 	global $count;
+	global $images;
 	if (!$parts) return true;
 	foreach ($parts as $part) {
 		$count[$level]++;
-		if ($part->subtype == "HTML" || $part->subtype == "PLAIN") {
-			for ($i=1; $i<$level; $i++) {
-				$sect[$part->subtype] .= $count[$i].".";
-			}
-			$sect[$part->subtype] .= $count[$level];
+		if ($part->type == 0 && ($part->subtype == "HTML" || $part->subtype == "PLAIN")) {
+			$sect[$part->subtype] = partname($count,$level);
 			$avail[$part->subtype] = true;
 			$enc[$part->subtype] = $part->encoding;
 			if ($part->parameters) {
@@ -307,6 +312,16 @@ function partloop($parts,$level) {
 					if ($par->attribute == "charset") $charset[$part->subtype] = $par->value;
 				}
 			}
+		}
+		elseif ($part->type == 5) {
+			global $mbox;
+			global $msgno;
+			$file = imap_fetchbody($mbox, $msgno, partname($count,$level));
+			if ($part->encoding == 3) $file = imap_base64($file);
+			if ($part->subtype) $ext = ".".strtolower($part->subtype);
+			$name = substr($part->id,1,-1);
+			file_put_contents("tmp/$name$ext",$file);
+			$images[$name] = "tmp/$name$ext";
 		}
 		partloop($part->parts,$level+1);
 	}
