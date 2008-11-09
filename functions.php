@@ -26,9 +26,8 @@ function nice_view($f) {
 	elseif ($f == "star") return "Starred";
 	elseif ($f == "bin") return "Bin";
 	elseif ($f == "tag") {
-		// TODO clean up thise
-		global $_GET;
-		return "Tag: ".$_GET['name'];
+		global $tagname;
+		return "Tag: ".$tagname;
 	}
 	else return $f;
 }
@@ -352,7 +351,10 @@ else {
 		$_SESSION['view'] = "inbox";
 	}
 }
+if ($view == "tag") {
+	if ($_GET['name']) $_SESSION['name'] = $_GET['name'];
+	$tagname = $_SESSION['name'];
+}
 
 $folder = "INBOX";
-$convos = $_SESSION['convos'];
 ?>

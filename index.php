@@ -287,15 +287,17 @@ else {
 	}
 	
 	if ($view == "tag") {
-		if ($result = mysql_query("SELECT DISTINCT COUNT(*) FROM `".$db_prefix."tags` WHERE name='".$_GET['name']."' AND account='$user'",$con)); else die(mysql_error());
+		if ($_GET['name']) $_SESSION['name'] = $_GET['name'];
+		$tagname = $_SESSION['name'];
+		if ($result = mysql_query("SELECT COUNT(distinct convo) FROM `".$db_prefix."tags` WHERE name='$tagname' AND account='$user'",$con)); else die(mysql_error());
+		$sel = "distinct convo";
 	} else {	
 		if ($result = mysql_query("SELECT COUNT(*) FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user'",$con)); else die(mysql_error());
+		$sel = "*";
 	}
 	if ($row = mysql_fetch_array($result)) {
-		$total = $row["COUNT(*)"];
-	}if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
-	do_actions();
-}
+		$total = $row["COUNT($sel)"];
+	}
 
 	$listend = $liststart + $listlen;
 	$next = true;
@@ -305,7 +307,7 @@ else {
 	}
 	
 	if ($view == "tag") {
-		if ($result = mysql_query("SELECT DISTINCT * FROM `".$db_prefix."tags` WHERE name='".$_GET['name']."' AND account='$user'",$con)); else die(mysql_error());
+		if ($result = mysql_query("SELECT DISTINCT * FROM `".$db_prefix."tags` WHERE name='$tagname' AND account='$user' ORDER BY convo DESC",$con)); else die(mysql_error());
 		$convotitle = "convo";
 	} else {
 		if ($result = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE ".$cond." AND account='$user' ORDER BY modified DESC",$con)); else die(mysql_error());
@@ -337,7 +339,17 @@ else {
 					$tagtext .= " <span class=\"normaltag\">".$row3["name"]."</span>";
 				}			
 				$jlink = "onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"";
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".nice_list_from($header->from)." (".$row['nomsgs'].")</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>".nice_date(strtotime($row['modified']))."</td></tr>\n";
+				if ($view == "tag") {
+					if ($result4 = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE id=".$row[$convotitle]." AND account='$user'",$con)); else die(mysql_error());
+					if ($row4 = mysql_fetch_assoc($result4)) {
+						$nomsgs = $row4['nomsgs'];
+						$date = nice_date(strtotime($row4['modified']));
+					}
+				} else {
+					$nomsgs = $row['nomsgs'];
+					$date = nice_date(strtotime($row['modified']));
+				}
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".nice_list_from($header->from)." ($nomsgs)</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>$date</td></tr>\n";
 			}
 		}
 		$count ++;
