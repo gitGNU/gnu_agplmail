@@ -26,9 +26,15 @@ function hili(num,base) {
 }
 function tick(chk,val) {
 	if (chk) {
-		for (i = 0; i < chk.length; i++) {
-			chk[i].checked = val;
-			chk[i].onchange();
+		if (chk.length) {
+			for (i = 0; i < chk.length; i++) {
+				chk[i].checked = val;
+				chk[i].onchange();
+			}
+		}
+		else {
+			chk.checked = val;
+			chk.onchange();
 		}
 	}
 }

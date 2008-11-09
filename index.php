@@ -328,8 +328,6 @@ else {
 			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE convo=".$row[$convotitle]." AND pos=1 AND account='$user'",$con)); else die(mysql_error());
 			while ($row2 = mysql_fetch_assoc($result2)) {
 				$header = imap_headerinfo($mbox, imap_msgno($mbox, $row2['uid']));
-				if ($row['read']) $class = "read";
-				else $class = "unread";
 				$i = $row[$convotitle];
 				$star = $row['starred'];
 				$tagtext = "";
@@ -344,11 +342,15 @@ else {
 					if ($row4 = mysql_fetch_assoc($result4)) {
 						$nomsgs = $row4['nomsgs'];
 						$date = nice_date(strtotime($row4['modified']));
+						$isread = $row4['read'];
 					}
 				} else {
 					$nomsgs = $row['nomsgs'];
 					$date = nice_date(strtotime($row['modified']));
+					$isread = $row['read'];
 				}
+				if ($isread) $class = "read";
+				else $class = "unread";
 				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".nice_list_from($header->from)." ($nomsgs)</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>$date</td></tr>\n";
 			}
 		}
