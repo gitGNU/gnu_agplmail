@@ -26,7 +26,7 @@ function nice_view($f) {
 	elseif ($f == "star") return "Starred";
 	elseif ($f == "bin") return "Bin";
 	elseif ($f == "tag") {
-		// TODO clean up this
+		// TODO clean up thise
 		global $_GET;
 		return "Tag: ".$_GET['name'];
 	}
@@ -75,7 +75,8 @@ function enewtext($to, $cc, $bcc, $sub, $con) {
 	CC: <input name=\"cc\" value=\"$cc\"/><br/>
 	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
 	Subject: <input name=\"subject\" value=\"$sub\"><br/>
-	<textarea rows=\"20\" cols=\"60\" name=\"content\">".$con."\n\n\n".get_setting("sig")."</textarea><br/>
+	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con."\n\n\n".get_setting("sig")."</textarea><br/>
+	<script langua=\"javascript\">makeWhizzyWig('messe', 'all')</script>
 	<button type=\"submit\">Send<button>
 </form>";
 }

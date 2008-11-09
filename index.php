@@ -28,6 +28,7 @@ $me = $_SERVER['SCRIPT_NAME'];
 <link rel="stylesheet" type="text/css" href="default.css"></link>
 <script language="javascript" src="ajax.js"></script>
 <script language="javascript" src="main.js"></script>
+<script language="javascript" src="whizzywig.js"></script>
 </head>
 <body>
 
@@ -118,7 +119,12 @@ elseif ($_GET['do'] == "send") {
 #		$_SESSION["headers"] = "";
 #	}
 #	else {
-		imap_mail($_POST["to"], $_POST["subject"], $_POST["content"], $_SESSION["headers"]."Content-Type: text/plain; charset=\"utf-8\"\n", $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
+		
+$part["type"] = TYPETEXT;
+$part["subtype"] = "HTML";
+$part["description"] = "test";
+$part["contents.data"] = $_POST["content"];
+		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"]."Content-Type: text/html; charset=\"utf-8\"\n".imap_mail_compose(array(), array($part)), $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
 		$_SESSION["headers"] = "";
 ?>
 <h2>Message Sent</h2>
@@ -157,33 +163,20 @@ function moreacts(vaule,tagname) {
 		$msgno = imap_msgno($mbox,$row['uid']);
 		$header = imap_headerinfo($mbox,$msgno);
 		
-		$body = "";
-		$struct = imap_fetchstructure($mbox,$msgno);
-		$charset = "";
-		if ($struct->type == 0) {
-			$body = nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
-		} else {
-			$i = 0;
-			foreach ($struct->parts as $part) {
-				$i++;
-				if ($part->parts) {
-					$j = 0;
-					foreach ($part->parts as $part2) {
-						$j++;
-						if ($part2->subtype == "HTML") {
-							$sect[$part2->subtype] = $i.".".$j;
-							$avail[$part2->subtype] = true;
-							$enc[$part2->subtype] = $part2->encoding;
-							if ($part2->parameters) {
-								foreach ($part2->parameters as $par) {
-									if ($par->attribute == "charset") $charset[$part2->subtype] = $par->value;
-								}
-							}
-						}
-					}
-				}
+		function partloop($parts,$level) {
+			global $sect;
+			global $avail;
+			global $enc;
+			global $charset;
+			global $count;
+			if (!$parts) return true;
+			foreach ($parts as $part) {
+				$count[$level]++;
 				if ($part->subtype == "HTML" || $part->subtype == "PLAIN") {
-					$sect[$part->subtype] = $i;
+					for ($i=1; $i<$level; $i++) {
+						$sect[$part->subtype] .= $count[$i].".";
+					}
+					$sect[$part->subtype] .= $count[$level];
 					$avail[$part->subtype] = true;
 					$enc[$part->subtype] = $part->encoding;
 					if ($part->parameters) {
@@ -192,19 +185,27 @@ function moreacts(vaule,tagname) {
 						}
 					}
 				}
+				partloop($part->parts,$level+1);
 			}
-			if ($avail["HTML"]) $mode = "HTML";
-			else $mode = "PLAIN";
-			$wantedpart = $sect[$mode];
-			if (!$wantedpart) $body = imap_body($mbox, $msgno);
-			else {
-				$body = imap_fetchbody($mbox, $msgno, $wantedpart);
-				if ($enc[$mode] == 3) $body = imap_base64($body);
-				if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
-				if ($mode == "PLAIN") $body = nl2br($body);
-			}
-			#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		}
+		$body = "";
+		$struct = imap_fetchstructure($mbox,$msgno);
+		$charset = "";
+		$count = array();
+		partloop(array($struct),0);
+			
+			
+		if ($avail["HTML"]) $mode = "HTML";
+		else $mode = "PLAIN";
+		$wantedpart = $sect[$mode];
+		if (!$wantedpart) $body = imap_body($mbox, $msgno);
+		else {
+			$body = imap_fetchbody($mbox, $msgno, $wantedpart);
+			if ($enc[$mode] == 3) $body = imap_base64($body);
+			if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
+			if ($mode == "PLAIN") $body = nl2br(htmlspecialchars($body));
+		}
+		#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		
 		echo "<div class=\"emess\"><div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
 		if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
