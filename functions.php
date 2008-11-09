@@ -83,7 +83,7 @@ function indent($mess) {
 }
 function enewtext($to, $cc, $bcc, $sub, $con) {
 	$html = get_setting("html");
-	if ($html == false) {
+	if ($html == "false") {
 		$sig = "\n\n\n".get_setting("sig");
 	} else {
 		$sig = "<br /><br />".nl2br(get_setting("sig"));

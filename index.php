@@ -122,6 +122,9 @@ elseif ($_GET['do'] == "send") {
 #		$_SESSION["headers"] = "";
 #	}
 #	else {
+		if (get_magic_quotes_gpc()) {
+			$_POST = array_map('stripslashes', $_POST);
+		}
 		$part["type"] = TYPETEXT;
 		if ($_POST["html"] == "true") {
 			$part["subtype"] = "HTML";
@@ -130,7 +133,8 @@ elseif ($_GET['do'] == "send") {
 		}
 		$part["description"] = "test";
 		$part["contents.data"] = $_POST["content"];
-		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"].imap_mail_compose(array(), array($part)), $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
+		$comp = imap_mail_compose(array(), array($part));
+		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"].$comp, $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
 		$_SESSION["headers"] = "";
 ?>
 <h2>Message Sent</h2>
