@@ -82,6 +82,7 @@ echo "<h2>Folders</h2>\n";
 <a href="<?php echo $me ?>?do=list&pos=0&view=inbox">Inbox</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=arc">All Mail</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=star">Starred</a><br/>
+<a href="<?php echo $me ?>?do=list&pos=0&view=sent">Sent</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=bin">Bin</a><br/>
 <br/>
 <a href="<?php echo $me ?>?do=settings">Settings</a><br/>
@@ -119,7 +120,7 @@ elseif ($_GET['do'] == "send") {
 #	print_r($_POST);
 #	if ($_SESSION['username'] == "demo") {
 #		echo "<h2>This is a Demo</h2>Sorry, sending is disabled.";
-#		$_SESSION["headers"] = "";
+#		$_SESSION["in_reply_to"] = "";
 #	}
 #	else {
 		if (get_magic_quotes_gpc()) {
@@ -128,14 +129,48 @@ elseif ($_GET['do'] == "send") {
 		$part["type"] = TYPETEXT;
 		if ($_POST["html"] == "true") {
 			$part["subtype"] = "HTML";
+			$html = 1;
 		} else {
 			$part["subtype"] = "PLAIN";
+			$html = 0;
 		}
 		$part["description"] = "test";
 		$part["contents.data"] = $_POST["content"];
-		$comp = imap_mail_compose(array(), array($part));
-		imap_mail($_POST["to"], $_POST["subject"], "", $_SESSION["headers"].$comp, $_POST["cc"], $user.", ".$_POST["bcc"], get_setting("name")." <$user>");
-		$_SESSION["headers"] = "";
+		$envelope["message_id"] =  "<".md5(uniqid(microtime()))."@".$_SERVER["SERVER_NAME"].">";
+		$envelope["from"] = get_setting("name")." <$user>";
+		$envelope["cc"] = $_POST["cc"];
+		$envelope["bcc"] = $_POST["bcc"];
+		if ($_SESSION["in_reply_to"]) $envelope["in_reply_to"] = $_SESSION["in_reply_to"];
+		$envelope["to"] = $_POST["to"];
+		$envelope["subject"] = $_POST["subject"];
+		$comp = imap_mail_compose($envelope, array($part));
+		list($t_header,$t_body)=split("\r\n\r\n",$comp,2);
+		imap_mail($_POST["to"], $_POST["subject"], $t_body, $t_header);
+		
+		if ($_GET['convo']) {
+			$convo = $_GET['convo'];
+			if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
+			if ($row=mysql_fetch_array($result)) {
+				$pos = $row['nomsgs']+1;
+				if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos, saved=1 WHERE account='$user' AND id='$convo'")); else die(mysql_error());
+			} else die("This software is insane!");
+		} else {
+			$pos = 1;
+		}
+		if ($pos == 1) {
+			$convo = get_setting("convotick");
+			if (!$convo) $convo = 1;
+			add_setting("convotick", $convo+1);
+			if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id, saved, archived, `read`) VALUES('$user', '".date("Y-m-d H:i:s")."', $convo, 1, 1, 1)")); else die(mysql_error());
+		}
+		$savedid = get_setting("savedtick");
+		if (!$savedid) $savedid = 1;
+		add_setting("savedtick", $savedid+1);
+		if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, uid, messid, pos, convo, date, saved) VALUES('$user', 'S$savedid', '".$envelope["message_id"]."', $pos, $convo, '".date("j F Y H:i")."', 1)", $con)); else die(mysql_error());
+		if (mysql_query("INSERT INTO `".$db_prefix."saved` (account, id, headers, body, html, date) VALUES('$user', 'S$savedid', '".mysql_real_escape_string($t_header)."', '".mysql_real_escape_string($_POST["content"])."', $html, '".date("Y-m-d H:i:s")."')", $con)); else die(mysql_error());
+			
+		$_GET["convo"];
+		$_SESSION["in_reply_to"] = "";
 ?>
 <h2>Message Sent</h2>
 <a href="<?php echo $me ?>">Return to inbox</a>?
@@ -163,7 +198,7 @@ function moreacts(vaule,tagname) {
 </script>	
 <?php
 	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br>";
-	if ($result = mysql_query("SELECT uid FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
+	if ($result = mysql_query("SELECT uid,saved FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
 	while ($row = mysql_fetch_assoc($result)) {
 		if ($first) {
@@ -171,48 +206,58 @@ function moreacts(vaule,tagname) {
 			$first = false;
 		}
 		$msgno = imap_msgno($mbox,$row['uid']);
-		$header = imap_headerinfo($mbox,$msgno);
-		
-		$body = "";
-		$struct = imap_fetchstructure($mbox,$msgno);
-		$sect = array();
-		$avail = array();
-		$enc = array();
-		$charset = array();
-		$count = array();
-		$images = array();
-		partloop(array($struct),0);	
-			
-		if ($avail["HTML"]) $mode = "HTML";
-		else $mode = "PLAIN";
-		$wantedpart = $sect[$mode];
-		if (!$wantedpart) $body = imap_body($mbox, $msgno);
-		else {
-			$body = imap_fetchbody($mbox, $msgno, $wantedpart);
-			if ($enc[$mode] == 3) $body = imap_base64($body);
-			if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
-			if ($mode == "HTML") {
-				foreach($images as $id => $src) {
-					$body = str_replace("cid:".$id, $src, $body);
-				}
+		if ($row['saved'] == 1) {
+			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."saved` WHERE id='".$row['uid']."' AND account='$user'",$con)); else die(mysql_error());
+			if ($row2 = mysql_fetch_assoc($result2)) {
+				$header = imap_rfc822_parse_headers($row2['headers']);
+				$body = $row2['body'];
+				$timestamp = strtotime($row2['date']);
 			}
-			if ($mode == "PLAIN") $body = nice_plain($body);
+		} else {
+			$header = imap_headerinfo($mbox,$msgno);
+			$timestamp = $header->udate;
+		
+			$body = "";
+			$struct = imap_fetchstructure($mbox,$msgno);
+			$sect = array();
+			$avail = array();
+			$enc = array();
+			$charset = array();
+			$count = array();
+			$images = array();
+			partloop(array($struct),0);	
+			
+			if ($avail["HTML"]) $mode = "HTML";
+			else $mode = "PLAIN";
+			$wantedpart = $sect[$mode];
+			if (!$wantedpart) $body = imap_body($mbox, $msgno);
+			else {
+				$body = imap_fetchbody($mbox, $msgno, $wantedpart);
+				if ($enc[$mode] == 3) $body = imap_base64($body);
+				if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
+				if ($mode == "HTML") {
+					foreach($images as $id => $src) {
+						$body = str_replace("cid:".$id, $src, $body);
+					}
+				}
+				if ($mode == "PLAIN") $body = nice_plain($body);
+			}
+			#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		}
-		#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		
 		echo "<div class=\"emess\"><div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
 		if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
 		if ($header->cc) echo "CC: ".nice_addr_list($header->cc)."<br/>";
-		echo "Date: ".date("j F Y H:i",$header->udate)."<br/>";
+		echo "Date: ".date("j F Y H:i",$timestamp)."<br/>";
 		echo "Subject: ".decode_qprint($header->subject)."</div><br/>";
 #		print_r($header);
 #		print_r($struct);
 		echo "<div class=\"econ\">".$body."</div>"; ?>
 <br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div><?php 
 	if ($_GET['reply'] == $row['uid']) {
-		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body))."</div>";
-		$_SESSION["headers"] = "In-Reply-To: ".$header->message_id."\n";
-	}
+		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>";
+		$_SESSION["in_reply_to"] = $header->message_id;
+	}imap_rfc822_parse_headers
 ?></div>
 	<?php
 	}
@@ -256,7 +301,12 @@ else {
 				$convoid = get_setting("convotick");
 				if (!$convoid) $convoid = 1;
 				add_setting("convotick", $convoid+1);
+				if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id) VALUES('$user', '".date("Y-m-d H:i:s", $header->udate)."', $convoid)")); else die(mysql_error());			if ($pos == 1) {
+				$convoid = get_setting("convotick");
+				if (!$convoid) $convoid = 1;
+				add_setting("convotick", $convoid+1);
 				if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id) VALUES('$user', '".date("Y-m-d H:i:s", $header->udate)."', $convoid)")); else die(mysql_error());
+			}
 			}
 			if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, uid, messid, pos, convo, date) VALUES('$user', '".imap_uid($mbox, $msgno)."', '".mysql_real_escape_string($header->message_id)."', $pos, $convoid, '".date("Y-m-d H:i:s", $header->udate)."')", $con)); else die(mysql_error());
 		}
@@ -278,6 +328,8 @@ else {
 	
 	if ($view == "arc") {
 	    $cond = "deleted=0";
+	} elseif ($view == "sent") {
+	    $cond = "saved=1";
 	} elseif ($view == "bin") {
 	    $cond = "deleted=1";
 	} elseif ($view == "star") {
@@ -327,7 +379,15 @@ else {
 			$jarray .= $row[$convotitle];
 			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."mess` WHERE convo=".$row[$convotitle]." AND pos=1 AND account='$user'",$con)); else die(mysql_error());
 			while ($row2 = mysql_fetch_assoc($result2)) {
-				$header = imap_headerinfo($mbox, imap_msgno($mbox, $row2['uid']));
+				if ($row2['saved'] == 1) {
+					if ($result5 = mysql_query("SELECT * FROM `".$db_prefix."saved` WHERE id='".$row2['uid']."' AND account='$user'",$con)); else die(mysql_error());
+					if ($row5 = mysql_fetch_assoc($result5)) {
+						$header = imap_rfc822_parse_headers($row5['headers']);
+						print_r($row5['header']);
+					}
+				} else {
+					$header = imap_headerinfo($mbox, imap_msgno($mbox, $row2['uid']));
+				}
 				$i = $row[$convotitle];
 				$star = $row['starred'];
 				$tagtext = "";

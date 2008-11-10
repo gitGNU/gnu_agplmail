@@ -28,7 +28,8 @@ CREATE TABLE `agplmail_convos` (
   `account` text NOT NULL,
   `starred` tinyint(1) NOT NULL default '0',
   `read` tinyint(1) NOT NULL,
-  `nomsgs` int(11) NOT NULL default '1'
+  `nomsgs` int(11) NOT NULL default '1',
+  `saved` int(11) NOT NULL default '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -39,12 +40,28 @@ CREATE TABLE `agplmail_convos` (
 
 CREATE TABLE `agplmail_mess` (
   `account` varchar(100) NOT NULL,
-  `uid` int(11) NOT NULL,
+  `uid` varchar(16) NOT NULL,
   `messid` varchar(200) NOT NULL,
   `pos` int(11) NOT NULL default '1',
   `convo` int(11) NOT NULL,
   `date` datetime NOT NULL,
-  `deleted` tinyint(1) NOT NULL
+  `deleted` tinyint(1) NOT NULL,
+  `saved` int(11) NOT NULL default '0'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `agplmail_saved`
+-- 
+
+CREATE TABLE `agplmail_saved` (
+  `id` varchar(16) NOT NULL,
+  `headers` text NOT NULL,
+  `body` text NOT NULL,
+  `html` tinyint(1) NOT NULL default '0',
+  `account` varchar(100) NOT NULL,
+  `date` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------

@@ -84,14 +84,14 @@ function indent($mess) {
 		return "<blockquote>".$mess."</blockquote>";
 	}
 }
-function enewtext($to, $cc, $bcc, $sub, $con) {
+function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 	$html = get_setting("html");
 	if ($html == "false") {
 		$sig = "\n\n\n".get_setting("sig");
 	} else {
 		$sig = "<br /><br />".nl2br(get_setting("sig"));
 	}
-	$text = "<form method=\"post\" action=\"index.php?do=send\" id=\"form\">
+	$text = "<form method=\"post\" action=\"index.php?do=send$extra\" id=\"form\">
 	To: <input name=\"to\" value=\"$to\"/><br/>
 	CC: <input name=\"cc\" value=\"$cc\"/><br/>
 	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
