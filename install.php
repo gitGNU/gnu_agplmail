@@ -31,6 +31,8 @@
 <h1>AGPLMail Install</h1>
 <p/>
 <?php
+if(file_exists("./config.php")) die("config.php already exists!  Delete this file if you want to re-install.");
+
 if($_SERVER['REQUEST_METHOD'] == 'GET') {
 ?>
 <script language="javascript">
@@ -280,12 +282,12 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	fclose($handle);
 ?>
 <font color="green">success!</font>
-<p>Changing permissions on config.php and install.php to prevent web user access:
+<p>Changing permissions on config.php prevent web user access:
 <?php
 chmod("config.php",0644) or die("<font color=red>Could not change permissions on config.php</font>");
-chmod("install.php",0644) or die("<font color=red>Could not change permissions on install.php</font>");
 ?>
 <font color="green">success!</font>
+<p>AGPLMail has been successfully installed!  <font color="red">Please remember to <b>DELETE INSTALL.PHP</b> immediately!</font></p>
 <?php
 }
 ?>
