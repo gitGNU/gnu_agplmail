@@ -40,7 +40,7 @@ if ($_GET['do'] == logout) {
 <h2>Logged out</h2> <a href="<?php echo $me ?>">Return to login</a>?
 <?php }
 elseif (!$_SESSION['username']) {
-echo "<br/>".$customhome;
+echo "<br/>".stripslashes($customhome);
 ?>
 
 <h2>Login</h2>
