@@ -275,7 +275,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	$config .= '$db_prefix = "' . $prefix . "\";\n\n";
 	$config .= '$server = "' . $server . "\";\n";
 	$config .= '$userprefix = "' . $userprefix . "\";\n";
-	$config .= '$customhome = "' . addslashes($customhome) . "\";\n";
+	$config .= '$customhome = "' . $customhome . '";' . "\n";
 	$config .= '?>';
 
 	fwrite($handle,$config);
