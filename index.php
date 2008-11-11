@@ -85,6 +85,8 @@ echo "<h2>Folders</h2>\n";
 <a href="<?php echo $me ?>?do=list&pos=0&view=sent">Sent</a><br/>
 <a href="<?php echo $me ?>?do=list&pos=0&view=bin">Bin</a><br/>
 <br/>
+<a href="<?php echo $me ?>?do=contacts">Contacts</a><br/>
+<br/>
 <a href="<?php echo $me ?>?do=settings">Settings</a><br/>
 <br/>
 <h2>Tags</h2>
@@ -114,6 +116,26 @@ if ($_GET['do'] == "settings") {
 	<button type="submit">Submit</button>
 </form>
 	<?php
+}
+########################### Contacts ###########################
+if ($_GET['do'] == "contacts") {
+	#print_r($_POST);
+	if ($_POST['addr']) add_address($_POST['name'], $_POST['addr'], 2); ?>
+	<h2>Contacts</h2>
+	<form method="post" action="index.php?do=contacts">
+	Add Contact - Name:<input name="name"/> Email Address:<input name="addr"/> <button type="submit">Add</button>
+	</form><br />
+<?php
+	if ($result = mysql_query("SELECT * FROM `".$db_prefix."addressbook` WHERE account='$user' ORDER BY priority DESC, name")); else die(mysql_error());
+	echo "<table><tr><td>Name</td><td>Email Address</td><td></td></tr>";
+	while($row=mysql_fetch_array($result)) {
+		if ($row['address'] != "" && $row['address'] == urldecode($_GET['addr'])) {
+			echo "<tr><form method=\"post\" action=\"index.php?do=contacts\"><td><input name=\"name\"/ value=\"".$row['name']."\"></td><td><input name=\"addr\" value=\"".$row['address']."\"/></td><td><button type=\"submit\">Edit</button></td></from></tr>";
+		} else {
+			echo "<tr><td>".$row['name']."</td><td>".$row['address']."</td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
+		}
+	}
+	echo "</table>";
 }
 ########################### Send Message ###########################
 elseif ($_GET['do'] == "send") {
@@ -149,10 +171,10 @@ elseif ($_GET['do'] == "send") {
 		
 		if ($_GET['convo']) {
 			$convo = $_GET['convo'];
-			if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
+			if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convo' AND account='$user'",$con)); else die(mysql_error());
 			if ($row=mysql_fetch_array($result)) {
 				$pos = $row['nomsgs']+1;
-				if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos, saved=1 WHERE account='$user' AND id='$convo'")); else die(mysql_error());
+				if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s")."', nomsgs=$pos, saved=1 WHERE account='$user' AND id='$convo'")); else die(mysql_error());
 			} else die("This software is insane!");
 		} else {
 			$pos = 1;
@@ -168,8 +190,11 @@ elseif ($_GET['do'] == "send") {
 		add_setting("savedtick", $savedid+1);
 		if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, uid, messid, pos, convo, date, saved) VALUES('$user', 'S$savedid', '".$envelope["message_id"]."', $pos, $convo, '".date("j F Y H:i")."', 1)", $con)); else die(mysql_error());
 		if (mysql_query("INSERT INTO `".$db_prefix."saved` (account, id, headers, body, html, date) VALUES('$user', 'S$savedid', '".mysql_real_escape_string($t_header)."', '".mysql_real_escape_string($_POST["content"])."', $html, '".date("Y-m-d H:i:s")."')", $con)); else die(mysql_error());
-			
-		$_GET["convo"];
+		
+		$header = imap_rfc822_parse_headers($t_header);
+		foreach ($header->to as $item) {
+			add_address(decode_qprint($item->personal), $item->mailbox."@".$item->host, 1);
+		}
 		$_SESSION["in_reply_to"] = "";
 ?>
 <h2>Message Sent</h2>
@@ -280,6 +305,9 @@ else {
 		$header = imap_headerinfo($mbox, $msgno);
 		if ($result = mysql_query("SELECT messid FROM `".$db_prefix."mess` WHERE messid='".mysql_real_escape_string($header->message_id)."' AND account='$user'",$con)); else die(mysql_error());
 		if (!mysql_fetch_array($result)) {
+			foreach ($header->from as $item) {
+				add_address(decode_qprint($item->personal), $item->mailbox."@".$item->host, 0);
+			}
 			if ($header->in_reply_to) {
 				if ($result = mysql_query("SELECT convo FROM `".$db_prefix."mess` WHERE messid='".mysql_real_escape_string($header->in_reply_to)."' AND account='$user'",$con)); else die(mysql_error());
 				if ($row=mysql_fetch_array($result)) {
@@ -287,7 +315,7 @@ else {
 					if ($result = mysql_query("SELECT nomsgs FROM `".$db_prefix."convos` WHERE id='$convoid' AND account='$user'",$con)); else die(mysql_error());
 					if ($row=mysql_fetch_array($result)) {
 						$pos = $row['nomsgs']+1;
-						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos, `read`=0 WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
+						if (mysql_query("UPDATE `".$db_prefix."convos` SET modified='".date("Y-m-d H:i:s", $header->udate)."', nomsgs=$pos, `read`=0, archived=0 WHERE account='$user' AND id='$convoid'")); else die(mysql_error());
 					} else die("SQL database is insane!");
 				}
 				else {
@@ -301,12 +329,7 @@ else {
 				$convoid = get_setting("convotick");
 				if (!$convoid) $convoid = 1;
 				add_setting("convotick", $convoid+1);
-				if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id) VALUES('$user', '".date("Y-m-d H:i:s", $header->udate)."', $convoid)")); else die(mysql_error());			if ($pos == 1) {
-				$convoid = get_setting("convotick");
-				if (!$convoid) $convoid = 1;
-				add_setting("convotick", $convoid+1);
 				if (mysql_query("INSERT INTO `".$db_prefix."convos` (account, modified, id) VALUES('$user', '".date("Y-m-d H:i:s", $header->udate)."', $convoid)")); else die(mysql_error());
-			}
 			}
 			if (mysql_query("INSERT INTO `".$db_prefix."mess` (account, uid, messid, pos, convo, date) VALUES('$user', '".imap_uid($mbox, $msgno)."', '".mysql_real_escape_string($header->message_id)."', $pos, $convoid, '".date("Y-m-d H:i:s", $header->udate)."')", $con)); else die(mysql_error());
 		}

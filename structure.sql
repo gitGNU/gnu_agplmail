@@ -17,6 +17,19 @@
 -- --------------------------------------------------------
 
 -- 
+-- Table structure for table `agplmail_addressbook`
+-- 
+
+CREATE TABLE `agplmail_addressbook` (
+  `name` varchar(100) NOT NULL,
+  `address` varchar(100) NOT NULL,
+  `priority` int(11) NOT NULL,
+  `account` varchar(100) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+-- 
 -- Table structure for table `agplmail_convos`
 -- 
 

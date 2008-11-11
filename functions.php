@@ -25,6 +25,7 @@ function nice_view($f) {
 	elseif ($f == "arc") return "Archive";
 	elseif ($f == "star") return "Starred";
 	elseif ($f == "bin") return "Bin";
+	elseif ($f == "sent") return "Sent";
 	elseif ($f == "tag") {
 		global $tagname;
 		return "Tag: ".$tagname;
@@ -327,6 +328,28 @@ function partloop($parts,$level) {
 			$images[$name] = "tmp/$name$ext";
 		}
 		partloop($part->parts,$level+1);
+	}
+}
+
+function add_address($name, $addr, $priority) {
+	// Add a message to the adressbook
+	// $priority is the priority, where:
+	//		0 is recieved an email from
+	//		1 is sent an email to
+	//		2 is added to the adressbook manually
+	global $con;
+	global $db_prefix;
+	global $user;
+	if ($result = mysql_query("SELECT priority,name FROM `".$db_prefix."addressbook` WHERE account='$user' AND address='$addr'",$con)); else die(mysql_error());
+	if ($row = mysql_fetch_array($result)) {
+		if ($priority > $row['priority']) {
+			if (mysql_query("UPDATE `".$db_prefix."addressbook` SET priority=$priority WHERE account='$user' AND address='$addr'", $con)); else die(mysql_error());
+		}
+		if ($row['name'] == "" || $priority >=  $row['priority']) {
+			if (mysql_query("UPDATE `".$db_prefix."addressbook` SET name='$name' WHERE account='$user' AND address='$addr'", $con)); else die(mysql_error());
+		}
+	} else {
+		if (mysql_query("INSERT INTO `".$db_prefix."addressbook` (account, name, address, priority) VALUES('$user', '$name','$addr', $priority)", $con)); else die(mysql_error());
 	}
 }
 
