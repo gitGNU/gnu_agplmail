@@ -40,7 +40,7 @@ if ($_GET['do'] == logout) {
 <h2>Logged out</h2> <a href="<?php echo $me ?>">Return to login</a>?
 <?php }
 elseif (!$_SESSION['username']) {
-echo "<br/>".stripslashes($customhome);
+echo "<br/>".$customhome;
 ?>
 
 <h2>Login</h2>
@@ -118,7 +118,7 @@ if ($_GET['do'] == "settings") {
 	<?php
 }
 ########################### Contacts ###########################
-if ($_GET['do'] == "contacts") {
+elseif ($_GET['do'] == "contacts") {
 	#print_r($_POST);
 	if ($_POST['addr']) add_address($_POST['name'], $_POST['addr'], 2); ?>
 	<h2>Contacts</h2>

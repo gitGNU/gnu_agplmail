@@ -137,10 +137,10 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	</div>
 	<div style="width:100%; float:left;">
 	        <div style="width:400px; text-align:left; float:left;">
-	        Email user suffix:
+	        Email user domain (include '@' symbol):
 		</div>
 		<div style="width:200px; text-align:left; float:left;">
-		<input	name="userprefix" id="userprefix" type="text" size="10"/>
+		<input	name="domain" id="domain" type="text" size="10"/>
 		</div>
 	</div>
 	<div style="width:100%; float:left; margin-top:40px;">
@@ -169,7 +169,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	$agplmuser = $_POST["agplmuser"];
 	$agplmpwd = $_POST["agplmpwd"];
 	$server = $_POST["server"];
-	$userprefix = $_POST["userprefix"];
+	$domain = $_POST["domain"];
 	$customhome = $_POST["customhome"];
 
 	if($dbtype == "existing") {
@@ -208,6 +208,15 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 ?>
 <p>Creating database structure...
 <?php
+	$sql = "CREATE TABLE `" . $prefix . "addressbook` (";
+	$sql .= "   `name` varchar(100) NOT NULL,";
+	$sql .= "   `address` varchar(100) NOT NULL,";
+	$sql .= "   `priority` int(11) NOT NULL,";
+	$sql .= "   `account` varchar(100) NOT NULL";
+	$sql .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1;";
+
+	mysql_query($sql) or die ('Cannot create addressbook table: ' . mysql_error());
+
 	$sql = "CREATE TABLE `" . $prefix . "convos` (";
 	$sql .= "  `id` int(11) NOT NULL,";
 	$sql .= "  `modified` datetime NOT NULL,";
@@ -247,9 +256,9 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	mysql_query($sql) or die ('Cannot create saved table: ' . mysql_error());
 
 	$sql = "CREATE TABLE `" . $prefix . "settings` (";
-	$sql .= "  `account` text NOT NULL,";
-	$sql .= "  `name` text NOT NULL,";
-	$sql .= "  `value` text NOT NULL";
+	$sql .= "  `account` varchar(100) NOT NULL,";
+	$sql .= "  `name` varchar(100) NOT NULL,";
+	$sql .= "  `value` varchar(100) NOT NULL";
 	$sql .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1; ";
 
 	mysql_query($sql) or die ('Cannot create settings table: ' . mysql_error());
@@ -274,7 +283,8 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	$config .= '$db_db = "' . $dbname . "\";\n";
 	$config .= '$db_prefix = "' . $prefix . "\";\n\n";
 	$config .= '$server = "' . $server . "\";\n";
-	$config .= '$userprefix = "' . $userprefix . "\";\n";
+	$config .= '$domain = array("' . $domain . "\");\n";
+	if (!get_magic_quotes_gpc()) $customhome = addslashes($customhome);
 	$config .= '$customhome = "' . $customhome . '";' . "\n";
 	$config .= '?>';
 
