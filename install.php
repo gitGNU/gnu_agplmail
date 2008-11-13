@@ -31,6 +31,7 @@
 <h1>AGPLMail Install</h1>
 <p/>
 <?php
+if(!extension_loaded("imap")) die("The php imap extension is not installed. Install it, or if you have, make sure you restart the webserver.");
 if(file_exists("./config.php")) die("config.php already exists!  Delete this file if you want to re-install.");
 
 if($_SERVER['REQUEST_METHOD'] == 'GET') {
