@@ -212,6 +212,14 @@ elseif ($_GET['do'] == "message") {
 	} else {
 		$convo = $_GET['convo'];
 	}
+	if ($_GET['expand']) {
+		if ($_GET['expand'] == "all") $exall = 1;
+		expand_mess($_GET['expand'],1);
+	}
+	if ($_GET['collapse']) {
+		if ($_GET['collapse'] == "all") $exall = 0;
+		expand_mess($_GET['collapse'],0);
+	}
 ?>
 <script>
 function moreact(value) {
@@ -222,14 +230,16 @@ function moreacts(vaule,tagname) {
 }
 </script>	
 <?php
-	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br>";
-	if ($result = mysql_query("SELECT uid,saved FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
+	echo " <div style=\"float: right\"><a href=\"?do=message&convo=$convo&expand=all\">Expand All</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"?do=message&convo=$convo&collapse=all\">Collapse All</a></div>";
+	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br />";
+	if ($result = mysql_query("SELECT uid,saved,expanded FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
 	while ($row = mysql_fetch_assoc($result)) {
 		if ($first) {
 			echo "<h2>".$header->subject."</h2>";
 			$first = false;
 		}
+		if ($exall !== NULL) expand_mess($row['uid'],$exall);
 		$msgno = imap_msgno($mbox,$row['uid']);
 		if ($row['saved'] == 1) {
 			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."saved` WHERE id='".$row['uid']."' AND account='$user'",$con)); else die(mysql_error());
@@ -240,7 +250,9 @@ function moreacts(vaule,tagname) {
 			}
 		} else {
 			$header = imap_headerinfo($mbox,$msgno);
+			#print_r($header);
 			$timestamp = $header->udate;
+			$unseen = $header->Unseen;
 		
 			$body = "";
 			$struct = imap_fetchstructure($mbox,$msgno);
@@ -270,14 +282,16 @@ function moreacts(vaule,tagname) {
 			#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		}
 		
-		echo "<div class=\"emess\"><div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
-		if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
-		if ($header->cc) echo "CC: ".nice_addr_list($header->cc)."<br/>";
-		echo "Date: ".date("j F Y H:i",$timestamp)."<br/>";
-		echo "Subject: ".decode_qprint($header->subject)."</div><br/>";
-#		print_r($header);
-#		print_r($struct);
-		echo "<div class=\"econ\">".$body."</div>"; ?>
+		if ($unseen == "U" || $row['expanded']) {
+			echo "<div class=\"emess\" id=\"mess".$row['uid']."\">";
+			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&collapse=".$row['uid']."#mess".$row['uid']."\">".nice_list_from($header->from)."</a></div>";
+			echo "<div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
+			if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
+			if ($header->cc) echo "CC: ".nice_addr_list($header->cc)."<br/>";
+			echo "Date: ".date("j F Y H:i",$timestamp)."<br/>";
+			echo "Subject: ".decode_qprint($header->subject)."</div><br/>";
+			#print_r($struct);
+			echo "<div class=\"econ\">".$body."</div>"; ?>
 <br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div><?php 
 	if ($_GET['reply'] == $row['uid']) {
 		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>";
@@ -285,6 +299,10 @@ function moreacts(vaule,tagname) {
 	}imap_rfc822_parse_headers
 ?></div>
 	<?php
+		}
+		else {
+			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>";
+		}	
 	}
 	// Mark the conversation as read in the sql
 	if (mysql_query("UPDATE `".$db_prefix."convos` SET `read`=1 WHERE account='$user' AND id='$convo'", $con)); else die(mysql_error());

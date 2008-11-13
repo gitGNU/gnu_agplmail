@@ -187,6 +187,7 @@ function do_action($name,$value,$text,$selection) {
 	global $con;
 	global $db_prefix;
 	global $user;
+	global $notif;
 	foreach ($selection as $convo) {
 		if (mysql_query("UPDATE `".$db_prefix."convos` SET `$name`=$value WHERE account='$user' AND id='$convo'", $con)); else die(mysql_error());
 	}
@@ -229,7 +230,7 @@ function do_actions() {
 		do_action("deleted", 0, "restored.",$selection);
 	} elseif ($_GET['type'] == "arc") {
 		do_action("archived", 1, "sent to archive",$selection);
-	} elseif ($_GET['type'] == "unarc") {
+	} elseif ($_GET['type'] == "unarc") {if (mysql_query("UPDATE `".$db_prefix."addressbook` SET name='$name' WHERE account='$user' AND address='$addr'", $con)); else die(mysql_error());
 		do_action("archived", 0, "returned to inbox",$selection);
 	} elseif ($_GET['type'] == "tag") {
 		tag($_GET['name'],$selection);
@@ -266,6 +267,7 @@ function do_actions() {
 			do_action("read", 1, "marked as read",$selection);
 		}
 		elseif ($_GET['type'] == "unread") {
+			echo $msglist;
 			imap_clearflag_full($mbox,$msglist,"\\Seen");
 			do_action("read", 0, "marked as unread",$selection);
 		}
@@ -351,6 +353,13 @@ function add_address($name, $addr, $priority) {
 	} else {
 		if (mysql_query("INSERT INTO `".$db_prefix."addressbook` (account, name, address, priority) VALUES('$user', '$name','$addr', $priority)", $con)); else die(mysql_error());
 	}
+}
+
+function expand_mess($uid,$value) {
+	global $con;
+	global $db_prefix;
+	global $user;
+	if (mysql_query("UPDATE `".$db_prefix."mess` SET expanded=$value WHERE account='$user' AND uid='$uid'", $con)); else die(mysql_error());	
 }
 
 $con = mysql_connect($db_host,$db_name,$db_pass);

@@ -46,7 +46,10 @@ h1 {
 	text-align: center;
 	margin: 0px;
 }
-.ehead, .efoot {
+.etitle {
+	border-bottom: thin solid black;
+}
+.etitle, .ehead, .efoot {
 	font-style: italic;
 	background-color: #AAFFAA;
 	padding: 7px;
