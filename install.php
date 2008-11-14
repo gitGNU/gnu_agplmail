@@ -77,7 +77,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 		MySQL root password:
 		</div>
 		<div style="width:200px; text-align:left; float:left;">
-		<input name="mysqlrootpwd" id="mysqlrootpwd" type="password" size="10"/>
+		<input name="mysqlrootpwd" id="mysqlrootpwd" expanded tinyint(1) NOT NULLtype="password" size="10"/>
 		</div>
 	</div>
         <div style="width:100%; margin-top:40px; float:left;">
@@ -240,7 +240,8 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	$sql .= "  `convo` int(11) NOT NULL,";
 	$sql .= "  `date` datetime NOT NULL,";
 	$sql .= "  `deleted` tinyint(1) NOT NULL,";
-	$sql .= "  `saved` int(11) NOT NULL default '0'";
+	$sql .= "  `saved` int(11) NOT NULL default '0',";
+	$sql .= "  `expanded` tinyint(1) NOT NULL";
 	$sql .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1; ";
 
 	mysql_query($sql) or die ('Cannot create mess table: ' . mysql_error());
