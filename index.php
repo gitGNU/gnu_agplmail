@@ -21,6 +21,18 @@ include "config.php";
 include "functions.php";
 $me = $_SERVER['SCRIPT_NAME'];
 
+########################### Attachments ###########################
+if ($_GET['do'] == "att") {
+	$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);
+	$msgno = imap_msgno($mbox, $_GET['mess']);
+	$struct = imap_fetchstructure($mbox,$msgno);
+	$file = imap_fetchbody($mbox, $msgno, $_GET['part']);
+	if ($_GET['enc'] == 3) $file = imap_base64($file);
+	if ($_GET['type']) header("Content-type: ".$_GET['type']);
+	if ($_GET['down']) header("Content-Disposition: attachment; filename=\"".$_GET['name']."\"");
+	echo $file;
+	die();
+}
 ?>
 <html>
 <head>
@@ -61,7 +73,7 @@ if ($domain) {
 <?php }
 else {
 
-$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);
+$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);$mbox = @imap_open("{".$server."/imap/notls}".$folder, $user, $pass);
 
 if (!$mbox) {
 	session_destroy(); ?>
@@ -240,6 +252,8 @@ function moreacts(vaule,tagname) {
 			$first = false;
 		}
 		if ($exall !== NULL) expand_mess($row['uid'],$exall);
+		
+		$uid = $row['uid'];
 		$msgno = imap_msgno($mbox,$row['uid']);
 		if ($row['saved'] == 1) {
 			if ($result2 = mysql_query("SELECT * FROM `".$db_prefix."saved` WHERE id='".$row['uid']."' AND account='$user'",$con)); else die(mysql_error());
@@ -253,36 +267,44 @@ function moreacts(vaule,tagname) {
 			#print_r($header);
 			$timestamp = $header->udate;
 			$unseen = $header->Unseen;
-		
-			$body = "";
-			$struct = imap_fetchstructure($mbox,$msgno);
-			$sect = array();
-			$avail = array();
-			$enc = array();
-			$charset = array();
-			$count = array();
-			$images = array();
-			partloop(array($struct),0);	
-			
-			if ($avail["HTML"]) $mode = "HTML";
-			else $mode = "PLAIN";
-			$wantedpart = $sect[$mode];
-			if (!$wantedpart) $body = imap_body($mbox, $msgno);
-			else {
-				$body = imap_fetchbody($mbox, $msgno, $wantedpart);
-				if ($enc[$mode] == 3) $body = imap_base64($body);
-				if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
-				if ($mode == "HTML") {
-					foreach($images as $id => $src) {
-						$body = str_replace("cid:".$id, $src, $body);
-					}
-				}
-				if ($mode == "PLAIN") $body = nice_plain($body);
-			}
-			#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 		}
 		
-		if ($unseen == "U" || $row['expanded']) {
+		if ($unseen == "U" || $row['expanded']) {	
+			if ($row['saved'] != 1) {
+				$body = "";
+				$struct = imap_fetchstructure($mbox,$msgno);
+				$sect = array();
+				$avail = array();
+				$enc = array();
+				$charset = array();
+				$count = array();
+				$att = array();
+				$emo = array();
+				partloop(array($struct),0);	
+			
+				if ($avail["HTML"]) $mode = "HTML";
+				else $mode = "PLAIN";
+				$wantedpart = $sect[$mode];
+				if (!$wantedpart) $body = imap_body($mbox, $msgno);
+				else {
+					$body = imap_fetchbody($mbox, $msgno, $wantedpart);
+					if ($enc[$mode] == 3) $body = imap_base64($body);
+					if ($charset[$mode]) $body = iconv($charset[$mode],"UTF-8",$body);
+					if ($mode == "HTML") {
+						foreach($emo as $id => $src) {
+							$body = str_replace("cid:".$id, $src, $body);
+						}
+					}
+					if ($mode == "PLAIN") $body = nice_plain($body);
+				}
+				if (sizeof($att) > 0) $body .= "<br/><br/><h3>Attatchments</h3>";
+				foreach ($att as $anatt) {
+					if ($anatt['type'] == 5) $body .= "<img src=\"".$anatt['link']."\"/><br/>";
+					$body.= "<a href=\"".$anatt['link']."&down=1&name=".$anatt['name']."\">".$anatt['name']."</a><br/><br/>";
+				}
+				#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
+			}
+			
 			echo "<div class=\"emess\" id=\"mess".$row['uid']."\">";
 			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&collapse=".$row['uid']."#mess".$row['uid']."\">".nice_list_from($header->from)."</a></div>";
 			echo "<div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";

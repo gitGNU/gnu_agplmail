@@ -305,7 +305,6 @@ function partloop($parts,$level) {
 	global $enc;
 	global $charset;
 	global $count;
-	global $images;
 	if (!$parts) return true;
 	foreach ($parts as $part) {
 		$count[$level]++;
@@ -319,15 +318,40 @@ function partloop($parts,$level) {
 				}
 			}
 		}
-		elseif ($part->type == 5) {
+		elseif ($part->type > 2) {
+		#http://freedomdreams.co.uk/agplmail/index.php?do=att&mess=145&part=2&enc=3&type=image/jpeg&down=1&name=me_cam.jpg
 			global $mbox;
 			global $msgno;
+			global $uid;
 			$file = imap_fetchbody($mbox, $msgno, partname($count,$level));
 			if ($part->encoding == 3) $file = imap_base64($file);
-			if ($part->subtype) $ext = ".".strtolower($part->subtype);
-			$name = substr($part->id,1,-1);
-			file_put_contents("tmp/$name$ext",$file);
-			$images[$name] = "tmp/$name$ext";
+			if ($part->subtype) $ext = strtolower($part->subtype);
+			if ($part->id && $part->type == 5) {
+				global $emo;
+				$name = substr($part->id,1,-1);
+				$emo[$name] = "?do=att&mess=$uid&part=2&enc=".$part->encoding."&type=image/$ext";
+			} else {
+				if ($part->parameters) {
+					foreach ($part->parameters as $par) {
+						if ($par->attribute == "name") $name = $par->value;
+					}
+				}
+				if ($part->type == 3) {
+					$type = "application";
+				} elseif ($part->type == 4) {
+					$type = "audio";
+				} elseif ($part->type == 5) {
+					$type = "image";
+				} elseif ($part->type == 6) {
+					$type = "video";
+				} elseif ($part->type == 7) {
+					$type = "other";
+				}
+				if ($name) {
+					global $att;
+					$att[] = array('name'=>$name, 'link'=>"?do=att&mess=$uid&part=2&enc=".$part->encoding."&type=$type/$ext", 'type'=>$part->type);
+				}
+			}
 		}
 		partloop($part->parts,$level+1);
 	}
