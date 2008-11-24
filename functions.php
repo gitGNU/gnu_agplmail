@@ -98,12 +98,12 @@ function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>";*/
 	$text .= "Subject: <input id=\"subject\" name=\"subject\" value=\"$sub\"><br/>
 	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con.$sig."</textarea><br/>";
+	$text .= "<script language=\"javascript\" src=\"mess.js\"></script>";
 	if ($html != "false") {
-	$text .= "<script language=\"javascript\">makeWhizzyWig('messe', 'all');
-	document.write('<input name=\"html\" value=\"true\" style=\"visibility: hidden; position:absolute;\"/>')</script>";
+		$text .= "<script language=\"javascript\">messhtml();
+		document.write('<input name=\"html\" value=\"true\" style=\"visibility: hidden; position:absolute;\"/>');</script>";
 	}
 	$text .= "<button type=\"submit\">Send<button></form>";
-	$text .= "<script language=\"javascript\" src=\"mess.js\"></script>";
 	return $text;
 }
 function actions() {

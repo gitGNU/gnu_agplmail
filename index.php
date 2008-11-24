@@ -44,12 +44,17 @@ if ($_GET['do'] == "att") {
 <script language="javascript" src="whizzywig.js"></script>
 
 <!-- YUI Controls for Autocomplete -->
-<link rel="stylesheet" type="text/css" href="<?php echo $yuiloc ?>build/autocomplete/assets/skins/sam/autocomplete.css" />
+<link rel="stylesheet" type="text/css" href="<?php echo $yuiloc ?>build/assets/skins/sam/skin.css" />
 <script type="text/javascript" src="<?php echo $yuiloc ?>build/yahoo-dom-event/yahoo-dom-event.js"></script>
 <script type="text/javascript" src="<?php echo $yuiloc ?>build/connection/connection-min.js"></script>
 <script type="text/javascript" src="<?php echo $yuiloc ?>build/animation/animation-min.js"></script>
 <script type="text/javascript" src="<?php echo $yuiloc ?>build/datasource/datasource-min.js"></script>
 <script type="text/javascript" src="<?php echo $yuiloc ?>build/autocomplete/autocomplete-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/element/element-beta-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/container/container-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/menu/menu-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/button/button-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/editor/editor-min.js"></script>
 
 </head>
 <body class=" yui-skin-sam">

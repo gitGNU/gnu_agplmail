@@ -43,3 +43,22 @@ toAC = function() {
     };
 }();
 
+function messhtml() {	
+    //Setup some private variables 
+    var Dom = YAHOO.util.Dom, 
+    Event = YAHOO.util.Event; 
+
+    //The Editor config 
+    var myConfig = { 
+        height: '300px', 
+        width: '600px', 
+        animate: true, 
+        dompath: true,
+        handleSubmit: true 
+    }; 
+ 
+    //Now let's load the Editor.. 
+    var myEditor = new YAHOO.widget.Editor('messe', myConfig); 
+    myEditor.render(); 
+}
+
