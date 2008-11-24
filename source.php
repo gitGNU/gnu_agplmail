@@ -18,18 +18,20 @@
 */
 
 if ($_GET['page'] == "") { ?>
+<a href="source.php?page=ajax.php">ajax.php</a><br/>
 <a href="default.css">defualt.css</a><br/>
+<a href="default_ie.css">defualtie.css</a><br/>
 <a href="source.php?page=functions.php">functions.php</a><br/>
 <a href="source.php?page=index.php">index.php</a><br/>
 <a href="source.php?page=install.php">install.php</a><br/>
-<a href="LICENSE">README</a><br/>
+<a href="LICENSE">LICENSE</a><br/>
 <a href="list.js">list.js</a><br/>
 <a href="main.js">main.js</a><br/>
+<a href="mess.js">mess.js</a><br/>
 <a href="source.php?page=source.php">source.php</a><br/>
 <a href="star_fill.png">star_fill.png</a><br/>
 <a href="star_nofill.png">star_nofill.png</a><br/>
 <a href="source.php?page=update.php">update.php</a><br/>
-<a href="whizzywig.js">whizzywig.js</a><br/>
 <?php }
 elseif ($_GET['page'] == "index.php" || $_GET['page'] == "functions.php" || $_GET['page'] == "ajax.php" || $_GET['page'] == "source.php" || $_GET['page'] == "install.php" || $_GET['page'] == "update.php") {
 	header('Content-type: text/plain');
