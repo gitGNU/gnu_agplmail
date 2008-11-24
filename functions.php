@@ -103,7 +103,7 @@ function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 		$text .= "<script language=\"javascript\">messhtml();
 		document.write('<input name=\"html\" value=\"true\" style=\"visibility: hidden; position:absolute;\"/>');</script>";
 	}
-	$text .= "<button type=\"submit\">Send<button></form>";
+	$text .= "<button type=\"submit\">Send</button></form>";
 	return $text;
 }
 function actions() {

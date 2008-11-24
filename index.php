@@ -39,6 +39,9 @@ if ($_GET['do'] == "att") {
 <head>
 <title>AGPLMail</title>
 <link rel="stylesheet" type="text/css" href="default.css"></link>
+<!--[if IE ]>
+<link rel="stylesheet" type="text/css" href="default_ie.css"></link>
+<![endif]-->
 <script language="javascript" src="ajax.js"></script>
 <script language="javascript" src="main.js"></script>
 <script language="javascript" src="whizzywig.js"></script>
