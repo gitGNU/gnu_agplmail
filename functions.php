@@ -80,6 +80,8 @@ function decode_qprint($text) {
 
 function indent($mess) {
 	if (get_setting("html") == "false") {
+		global $mode;
+		if ($mode == "HTML") $mess = strip_tags(preg_replace('/\<br(\s*)?\/?\>/i', "\n", preg_replace("[\r\n]", "", $mess))); 
 		return "> ".ereg_replace("\n","\n> ",$mess);
 	} else {
 		return "<blockquote>".$mess."</blockquote>";
