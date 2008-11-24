@@ -266,7 +266,18 @@ function moreacts(vaule,tagname) {
 	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br />";
 	if ($result = mysql_query("SELECT uid,saved,expanded FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
-	while ($row = mysql_fetch_assoc($result)) {
+	$last = false;
+	function get_row() {
+		global $row; global $result; global $oldrow;  global $last;
+		if ($row = mysql_fetch_assoc($result)) {
+			$oldrow = $row;
+		} else {
+			$row = $oldrow;
+			$last = true;
+		}
+		return true;
+	}
+	while (get_row()) {
 		if ($first) {
 			echo "<h2>".$header->subject."</h2>";
 			$first = false;
@@ -289,7 +300,7 @@ function moreacts(vaule,tagname) {
 			$unseen = $header->Unseen;
 		}
 		
-		if ($unseen == "U" || $row['expanded']) {	
+		if ($unseen == "U" || $row['expanded'] || $last) {	
 			if ($row['saved'] != 1) {
 				$body = "";
 				$struct = imap_fetchstructure($mbox,$msgno);
@@ -345,6 +356,7 @@ function moreacts(vaule,tagname) {
 		else {
 			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>";
 		}	
+		if ($last) break;
 	}
 	// Mark the conversation as read in the sql
 	if (mysql_query("UPDATE `".$db_prefix."convos` SET `read`=1 WHERE account='$user' AND id='$convo'", $con)); else die(mysql_error());
