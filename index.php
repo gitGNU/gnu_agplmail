@@ -162,7 +162,7 @@ elseif ($_GET['do'] == "contacts") {
 		if ($row['address'] != "" && $row['address'] == urldecode($_GET['addr'])) {
 			echo "<tr><form method=\"post\" action=\"index.php?do=contacts\"><td><input name=\"name\"/ value=\"".$row['name']."\"></td><td><input name=\"addr\" value=\"".$row['address']."\"/></td><td><button type=\"submit\">Edit</button></td></from></tr>";
 		} else {
-			echo "<tr><td>".$row['name']."</td><td>".$row['address']."</td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
+			echo "<tr><td>".$row['name']."</td><td><a href=\"?do=new&to=".urlencode($row['name']." ".$row['address'])."\">".$row['address']."</a></td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
 		}
 	}
 	echo "</table>";
@@ -232,8 +232,10 @@ elseif ($_GET['do'] == "send") {
 <?php } #}
 ########################### New Message ###########################
 elseif ($_GET['do'] == "new") {
+	$to = "";
+	if ($_GET['to']) $to = $_GET['to']; 
 	echo "<h2>New Email</h2>";
-	echo enewtext("","","","","");
+	echo enewtext($to,"","","","");
 }
 ########################### View Message ###########################
 elseif ($_GET['do'] == "message") {
