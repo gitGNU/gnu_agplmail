@@ -267,14 +267,15 @@ function moreacts(vaule,tagname) {
 	if ($result = mysql_query("SELECT uid,saved,expanded FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
 	$last = false;
+	$oldrow = mysql_fetch_assoc($result);
 	function get_row() {
-		global $row; global $result; global $oldrow;  global $last;
-		if ($row = mysql_fetch_assoc($result)) {
-			$oldrow = $row;
+		global $row; global $result; global $oldrow;  global $last; global $first;
+		$row = $oldrow;
+		if ($oldrow = mysql_fetch_assoc($result)) {
 		} else {
-			$row = $oldrow;
 			$last = true;
 		}
+		if ($first);
 		return true;
 	}
 	while (get_row()) {
@@ -300,7 +301,7 @@ function moreacts(vaule,tagname) {
 			$unseen = $header->Unseen;
 		}
 		
-		if ($unseen == "U" || $row['expanded'] || $last) {	
+		if (( $unseen == "U" || $row['expanded'] || ($last && $row['expanded'] !== '0') ) && $exall !== 0 || $exall == 1) {	
 			if ($row['saved'] != 1) {
 				$body = "";
 				$struct = imap_fetchstructure($mbox,$msgno);
