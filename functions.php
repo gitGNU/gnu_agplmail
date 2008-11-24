@@ -92,17 +92,18 @@ function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 	} else {
 		$sig = "<br /><br />".nl2br(get_setting("sig"));
 	}
-	$text = "<form method=\"post\" action=\"index.php?do=send$extra\" id=\"form\">
-	To: <input name=\"to\" value=\"$to\"/><br/>
-	CC: <input name=\"cc\" value=\"$cc\"/><br/>
-	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>
-	Subject: <input name=\"subject\" value=\"$sub\"><br/>
+	$text .= "<form method=\"post\" action=\"index.php?do=send$extra\" id=\"form\">
+	<div class=\"messlabel\">To:</div><div id=\"toac\" class=\"messac\"><input id=\"to\" name=\"to\" value=\"$to\"/><div class=\"cont\" id=\"tocont\"></div></div>";
+/*	$text .= "CC: <input name=\"cc\" value=\"$cc\"/><br/>
+	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>";*/
+	$text .= "Subject: <input id=\"subject\" name=\"subject\" value=\"$sub\"><br/>
 	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con.$sig."</textarea><br/>";
 	if ($html != "false") {
 	$text .= "<script language=\"javascript\">makeWhizzyWig('messe', 'all');
 	document.write('<input name=\"html\" value=\"true\" style=\"visibility: hidden; position:absolute;\"/>')</script>";
 	}
 	$text .= "<button type=\"submit\">Send<button></form>";
+	$text .= "<script language=\"javascript\" src=\"mess.js\"></script>";
 	return $text;
 }
 function actions() {

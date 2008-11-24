@@ -97,3 +97,15 @@ tr.header {
 	background-color: #BBBBFF;
 }
 
+#toac, #subject {
+    width: 40em;
+}
+.messlabel {
+	height: 1.5em;
+}
+.messac {
+	position: relative;
+	top: -1.5em;
+	left: 2em;
+}
+

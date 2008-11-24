@@ -20,6 +20,7 @@
 include "config.php";
 include "functions.php";
 $me = $_SERVER['SCRIPT_NAME'];
+if (!$yuiloc) $yuiloc = "http://yui.yahooapis.com/2.6.0/";
 
 ########################### Attachments ###########################
 if ($_GET['do'] == "att") {
@@ -41,8 +42,17 @@ if ($_GET['do'] == "att") {
 <script language="javascript" src="ajax.js"></script>
 <script language="javascript" src="main.js"></script>
 <script language="javascript" src="whizzywig.js"></script>
+
+<!-- YUI Controls for Autocomplete -->
+<link rel="stylesheet" type="text/css" href="<?php echo $yuiloc ?>build/autocomplete/assets/skins/sam/autocomplete.css" />
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/connection/connection-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/animation/animation-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="<?php echo $yuiloc ?>build/autocomplete/autocomplete-min.js"></script>
+
 </head>
-<body>
+<body class=" yui-skin-sam">
 
 <h1>AGPLMail</h1>
 <?php
