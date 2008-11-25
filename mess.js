@@ -33,6 +33,7 @@ toAC = function() {
     // Instantiate the AutoComplete
     var oAC = new YAHOO.widget.AutoComplete("to", "tocont", oDS);
     oAC.queryQuestionMark = false;
+    //oAC.useIFrame = true;
     oAC.formatResult = function(oResultData, sQuery, sResultMatch) {
 		return oResultData[1];
 	};
