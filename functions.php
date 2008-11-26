@@ -233,7 +233,7 @@ function do_actions() {
 		do_action("deleted", 0, "restored.",$selection);
 	} elseif ($_GET['type'] == "arc") {
 		do_action("archived", 1, "sent to archive",$selection);
-	} elseif ($_GET['type'] == "unarc") {if (mysql_query("UPDATE `".$db_prefix."addressbook` SET name='$name' WHERE account='$user' AND address='$addr'", $con)); else die(mysql_error());
+	} elseif ($_GET['type'] == "unarc") {
 		do_action("archived", 0, "returned to inbox",$selection);
 	} elseif ($_GET['type'] == "tag") {
 		tag($_GET['name'],$selection);

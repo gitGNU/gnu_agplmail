@@ -327,7 +327,9 @@ function moreacts(vaule,tagname) {
 							$body = str_replace("cid:".$id, $src, $body);
 						}
 					}
-					if ($mode == "PLAIN") $body = nice_plain($body);
+					// $body2 to avoid html tags in plaintext reply
+					if ($mode == "PLAIN") $body2 = nice_plain($body);
+					else $body2 = $body;
 				}
 				#$body .= "<br/><br/><br/>".nl2br(htmlspecialchars(imap_body($mbox, $msgno)));
 			}
@@ -340,11 +342,13 @@ function moreacts(vaule,tagname) {
 			echo "Date: ".date("j F Y H:i",$timestamp)."<br/>";
 			echo "Subject: ".decode_qprint($header->subject)."</div><br/>";
 			#print_r($struct);
-			echo "<div class=\"econ\">".$body;
-			if (sizeof($att) > 0) echo "<br/><br/><h3>Attatchments</h3>";
-			foreach ($att as $anatt) {
-				if ($anatt['type'] == 5) echo "<img src=\"".$anatt['link']."\"/><br/>";
-				echo "<a href=\"".$anatt['link']."&down=1&name=".$anatt['name']."\">".$anatt['name']."</a><br/><br/>";
+			echo "<div class=\"econ\">".$body2;
+				if (sizeof($att) > 0) {
+				echo "<br/><br/><h3>Attatchments</h3>";
+				foreach ($att as $anatt) {
+					if ($anatt['type'] == 5) echo "<img src=\"".$anatt['link']."\"/><br/>";
+					echo "<a href=\"".$anatt['link']."&down=1&name=".$anatt['name']."\">".$anatt['name']."</a><br/><br/>";
+				}
 			}
 			echo "</div>"; ?>
 <br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div><?php 
