@@ -19,6 +19,7 @@
 
 include "config.php";
 include "functions.php";
+if ($libreapps) $appname = "Mail";
 $me = $_SERVER['SCRIPT_NAME'];
 if (!$yuiloc) $yuiloc = "http://yui.yahooapis.com/2.6.0/";
 
@@ -34,10 +35,12 @@ if ($_GET['do'] == "att") {
 	echo $file;
 	die();
 }
+
 ?>
 <html>
 <head>
 <title>AGPLMail</title>
+<?php if ($libreapps) { ?><link rel="stylesheet" type="text/css" href="../style.css"></link><?php } ?>
 <link rel="stylesheet" type="text/css" href="default.css"></link>
 <!--[if IE ]>
 <link rel="stylesheet" type="text/css" href="default_ie.css"></link>
@@ -62,8 +65,11 @@ if ($_GET['do'] == "att") {
 </head>
 <body class=" yui-skin-sam">
 
-<h1>AGPLMail</h1>
 <?php
+
+if ($libreapps) include "../header2.php";
+else echo "<h1>AGPLMail</h1>";
+
 
 if ($_GET['do'] == logout) {
 	session_destroy(); ?>
@@ -540,9 +546,13 @@ echo "</div>";
 imap_close($mbox);
 mysql_close($con);
 
-} } ?>
+} }
 
-<br/><br/><a href="http://freedomdreams.co.uk/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">source code</a>?
+if ($libreapps) include "../footer.php";
+else { ?>
+
+<br/><br/><a href="http://dev.libreapps.com/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">source code</a>?
 
 </body>
 </html>
+<?php } ?>
