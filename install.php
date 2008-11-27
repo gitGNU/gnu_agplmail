@@ -149,7 +149,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	        Custom home message:
 		</div>
 		<div style="width:200px; text-align:left; float:left;">
-		<textarea name="customhome" id="customhome" cols="40" rows="3" />Find out more about AGPLMail at our <a href="http://freedomdreams.co.uk/wiki/AGPLMail">wiki page.</a></textarea>
+		<textarea name="customhome" id="customhome" cols="40" rows="3" />Find out more about AGPLMail at our <a href="http://dev.libreapps.com/wiki/AGPLMail">wiki page.</a></textarea>
 		</div>
 	</div>
 
