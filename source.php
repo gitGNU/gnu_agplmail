@@ -17,23 +17,20 @@
 # along with AGPLMail.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+$pages = array("ajax.php", "default.css", "default_ie.css", "functions.php", "index.php", "install.php", "LICENSE", "list.js", "main.js", "mess.js", "source.php", "star_fill.png", "star_nofill.png", "update.php");
+
 if ($_GET['page'] == "") { ?>
-<a href="source.php?page=ajax.php">ajax.php</a><br/>
-<a href="default.css">defualt.css</a><br/>
-<a href="default_ie.css">defualtie.css</a><br/>
-<a href="source.php?page=functions.php">functions.php</a><br/>
-<a href="source.php?page=index.php">index.php</a><br/>
-<a href="source.php?page=install.php">install.php</a><br/>
-<a href="LICENSE">LICENSE</a><br/>
-<a href="list.js">list.js</a><br/>
-<a href="main.js">main.js</a><br/>
-<a href="mess.js">mess.js</a><br/>
-<a href="source.php?page=source.php">source.php</a><br/>
-<a href="star_fill.png">star_fill.png</a><br/>
-<a href="star_nofill.png">star_nofill.png</a><br/>
-<a href="source.php?page=update.php">update.php</a><br/>
-<?php }
-elseif ($_GET['page'] == "index.php" || $_GET['page'] == "functions.php" || $_GET['page'] == "ajax.php" || $_GET['page'] == "source.php" || $_GET['page'] == "install.php" || $_GET['page'] == "update.php") {
+The following are the absolute current sources for this copy of AGPLMail, as the AGPL requires. If you want an easy way to download a usable copy of gmail, <a href="http://dev.libreapps.com/wiki/AGPLMail#Download">see here</a> instead.<br/><br/>
+<?php
+	foreach ($pages as $page) {
+		if (substr($page, -4) == ".php") {
+			echo "<a href=\"source.php?page=$page\">$page</a><br/>";
+		} else {
+			echo "<a href=\"$page\">$page</a><br/>";
+		}	
+	}
+}
+elseif (in_array($_GET['page'], $pages)) {
 	header('Content-type: text/plain');
 	$file = file($_GET['page']);
 	foreach ($file as $line)
