@@ -22,6 +22,7 @@ include "functions.php";
 if ($libreapps) $appname = "Mail";
 $me = $_SERVER['SCRIPT_NAME'];
 if (!$yuiloc) $yuiloc = "http://yui.yahooapis.com/2.6.0/";
+if (!$theme) $theme = "default";
 
 ########################### Attachments ###########################
 if ($_GET['do'] == "att") {
@@ -41,9 +42,9 @@ if ($_GET['do'] == "att") {
 <head>
 <title>AGPLMail</title>
 <?php if ($libreapps) { ?><link rel="stylesheet" type="text/css" href="../style.css"></link><?php } ?>
-<link rel="stylesheet" type="text/css" href="default.css"></link>
+<link rel="stylesheet" type="text/css" href="<?php echo $theme; ?>.css"></link>
 <!--[if IE ]>
-<link rel="stylesheet" type="text/css" href="default_ie.css"></link>
+<link rel="stylesheet" type="text/css" href="<?php echo $theme; ?>_ie.css"></link>
 <![endif]-->
 <?php if (!$libreapps) { ?>
 <style>

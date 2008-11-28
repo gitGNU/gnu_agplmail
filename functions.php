@@ -270,7 +270,6 @@ function do_actions() {
 			do_action("read", 1, "marked as read",$selection);
 		}
 		elseif ($_GET['type'] == "unread") {
-			echo $msglist;
 			imap_clearflag_full($mbox,$msglist,"\\Seen");
 			do_action("read", 0, "marked as unread",$selection);
 		}
