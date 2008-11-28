@@ -39,20 +39,20 @@ function tick(chk,val) {
 	}
 }
 function selall() {
-	tick(document.form.check_read,true);
-	tick(document.form.check_unread,true);
+	tick(document.getElementById("listform").check_read,true);
+	tick(document.getElementById("listform").check_unread,true);
 }
 function selnone() {
-	tick(document.form.check_read,false);
-	tick(document.form.check_unread,false);
+	tick(document.getElementById("listform").check_read,false);
+	tick(document.getElementById("listform").check_unread,false);
 }
 function selread() {
-	tick(document.form.check_read,true);
-	tick(document.form.check_unread,false);
+	tick(document.getElementById("listform").check_read,true);
+	tick(document.getElementById("listform").check_unread,false);
 }
 function selunread() {
-	tick(document.form.check_unread,true);
-	tick(document.form.check_read,false);
+	tick(document.getElementById("listform").check_unread,true);
+	tick(document.getElementById("listform").check_read,false);
 }
 function moreact(value) {
 	moreacts(value,"");
@@ -81,3 +81,4 @@ function moreacts(value,tagname) {
 		do_actions(value, tagname, range);
 	}
 }
+

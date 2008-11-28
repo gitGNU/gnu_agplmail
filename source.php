@@ -16,19 +16,27 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with AGPLMail.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+include "config.php";
+$appname = "Mail";
 $pages = array("ajax.php", "default.css", "default_ie.css", "functions.php", "index.php", "install.php", "LICENSE", "list.js", "main.js", "mess.js", "source.php", "star_fill.png", "star_nofill.png", "update.php");
 
-if ($_GET['page'] == "") { ?>
-The following are the absolute current sources for this copy of AGPLMail, as the AGPL requires. If you want an easy way to download a usable copy of gmail, <a href="http://dev.libreapps.com/wiki/AGPLMail#Download">see here</a> instead.<br/><br/>
+if ($_GET['page'] == "") {
+if ($libreapps) { include "../header.php"; ?>
+<div id="la-content"><?php } ?>
+<h2>AGPLMail Sources</h2>
+The following are the absolute current sources for this copy of AGPLMail, as the AGPL requires. If you want an easy way to download a usable copy of AGPLMail, <a href="http://dev.libreapps.com/wiki/AGPLMail#Download">see here</a> instead.
+<ul>
 <?php
 	foreach ($pages as $page) {
 		if (substr($page, -4) == ".php") {
-			echo "<a href=\"source.php?page=$page\">$page</a><br/>";
+			echo "<li><a href=\"source.php?page=$page\">$page</a></li>";
 		} else {
-			echo "<a href=\"$page\">$page</a><br/>";
+			echo "<li><a href=\"$page\">$page</a></li>";
 		}	
 	}
+	echo "</ul>";
+	if ($libreapps) { echo "</div>";
+	include "../footer.php"; }
 }
 elseif (in_array($_GET['page'], $pages)) {
 	header('Content-type: text/plain');

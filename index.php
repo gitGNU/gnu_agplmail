@@ -38,7 +38,9 @@ if ($_GET['do'] == "att") {
 }
 
 ?>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
+   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <title>AGPLMail</title>
 <?php if ($libreapps) { ?><link rel="stylesheet" type="text/css" href="../style.css"></link><?php } ?>
@@ -51,9 +53,9 @@ if ($_GET['do'] == "att") {
 body { padding: 0.5em; }
 </style>
 <?php } ?>
-<script language="javascript" src="ajax.js"></script>
-<script language="javascript" src="main.js"></script>
-<script language="javascript" src="whizzywig.js"></script>
+<script type="text/javascript" src="ajax.js"></script>
+<script type="text/javascript" src="main.js"></script>
+<script type="text/javascript" src="whizzywig.js"></script>
 
 <!-- YUI Controls for Autocomplete -->
 <link rel="stylesheet" type="text/css" href="<?php echo $yuiloc ?>build/assets/skins/sam/skin.css" />
@@ -87,7 +89,7 @@ echo "<div id=\"la-content\">".$customhome;
 ?>
 
 <h2>Login</h2>
-<form method="post" action="<?php echo $me ?>">
+<form method="post" action="<?php echo $me ?>"><div id="form">
 	User: <input name="username"></input>
 <?php
 if ($domain) {
@@ -101,7 +103,7 @@ if ($domain) {
 	<br/>
 	Password: <input name="password" type="password"></input><br/>
 	<button type="submit">Submit</button>
-</form>
+</div></form>
 </div>
 
 <?php }
@@ -125,11 +127,11 @@ echo "<div id=\"sidebar\">";
 echo "<a href=\"$me?do=new\">New Email</a>";
 echo "<h2>Folders</h2>\n";
 ?>
-<a href="<?php echo $me ?>?do=list&pos=0&view=inbox">Inbox</a><br/>
-<a href="<?php echo $me ?>?do=list&pos=0&view=arc">All Mail</a><br/>
-<a href="<?php echo $me ?>?do=list&pos=0&view=star">Starred</a><br/>
-<a href="<?php echo $me ?>?do=list&pos=0&view=sent">Sent</a><br/>
-<a href="<?php echo $me ?>?do=list&pos=0&view=bin">Bin</a><br/>
+<a href="<?php echo $me ?>?do=list&amp;pos=0&amp;view=inbox">Inbox</a><br/>
+<a href="<?php echo $me ?>?do=list&amp;pos=0&amp;view=arc">All Mail</a><br/>
+<a href="<?php echo $me ?>?do=list&amp;pos=0&amp;view=star">Starred</a><br/>
+<a href="<?php echo $me ?>?do=list&amp;pos=0&amp;view=sent">Sent</a><br/>
+<a href="<?php echo $me ?>?do=list&amp;pos=0&amp;view=bin">Bin</a><br/>
 <br/>
 <a href="<?php echo $me ?>?do=contacts">Contacts</a><br/>
 <br/>
@@ -139,7 +141,7 @@ echo "<h2>Folders</h2>\n";
 <?php
 if ($result = mysql_query("SELECT DISTINCT name FROM `".$db_prefix."tags` WHERE account='$user'",$con)); else die(mysql_error());
 while ($row=mysql_fetch_array($result)) {
-	echo "<a href=\"?do=list&pos=0&view=tag&name=".$row["name"]."\">".$row["name"]."</a><br/>";
+	echo "<a href=\"?do=list&amp;pos=0&amp;view=tag&amp;name=".$row["name"]."\">".$row["name"]."</a><br/>";
 }
 
 
@@ -153,14 +155,14 @@ if ($_GET['do'] == "settings") {
 	if ($_POST['html']) add_setting("html",$_POST['html']);
 	?>
 <h2>Settings</h2>
-<form method="post" action="<?php echo $me ?>?do=settings">
+<form method="post" action="<?php echo $me ?>?do=settings"><div>
 	Name: <input name="name" value="<?php echo get_setting("name"); ?>"></input><br/>
 	Convos per page: <input name="listlen" value="<?php echo get_setting("listlen"); ?>"></input><br/>
-	<?php if (get_setting("html") == "false") $pc = " checked"; else $hc = " checked";
-	?> Message composition format: Plain:<input type="radio" name="html" value="false"<?php echo $pc; ?>> HTML:<input type="radio" name="html" value="true"<?php echo $hc; ?>><br/>
-	Signature: <textarea name="sig" style="width: 50%; height: 100px;"><?php echo get_setting("sig"); ?></textarea>
+	<?php if (get_setting("html") == "false") $pc = " checked"; else $hc = " checked=\"checked\"";
+	?> Message composition format: Plain:<input type="radio" name="html" value="false"<?php echo $pc; ?> /> HTML:<input type="radio" name="html" value="true"<?php echo $hc; ?> /><br/>
+	Signature: <textarea name="sig" rows="10" cols="40" style="width: 50%; height: 100px;"><?php echo get_setting("sig"); ?></textarea>
 	<button type="submit">Submit</button>
-</form>
+</div></form>
 	<?php
 }
 ########################### Contacts ###########################
@@ -169,8 +171,8 @@ elseif ($_GET['do'] == "contacts") {
 	if ($_POST['addr']) add_address($_POST['name'], $_POST['addr'], 2); ?>
 	<h2>Contacts</h2>
 	<form method="post" action="index.php?do=contacts">
-	Add Contact - Name:<input name="name"/> Email Address:<input name="addr"/> <button type="submit">Add</button>
-	</form><br />
+	<div style="padding-bottom: 1.5em;">Add Contact - Name:<input name="name" /> Email Address:<input name="addr" /> <button type="submit">Add</button></div>
+	</form>
 <?php
 	if ($result = mysql_query("SELECT * FROM `".$db_prefix."addressbook` WHERE account='$user' ORDER BY priority DESC, name")); else die(mysql_error());
 	echo "<table><tr><td>Name</td><td>Email Address</td><td></td></tr>";
@@ -178,7 +180,7 @@ elseif ($_GET['do'] == "contacts") {
 		if ($row['address'] != "" && $row['address'] == urldecode($_GET['addr'])) {
 			echo "<tr><form method=\"post\" action=\"index.php?do=contacts\"><td><input name=\"name\"/ value=\"".$row['name']."\"></td><td><input name=\"addr\" value=\"".$row['address']."\"/></td><td><button type=\"submit\">Edit</button></td></from></tr>";
 		} else {
-			echo "<tr><td>".$row['name']."</td><td><a href=\"?do=new&to=".urlencode($row['name']." <".$row['address'].">")."\">".$row['address']."</a></td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
+			echo "<tr><td>".$row['name']."</td><td><a href=\"?do=new&amp;to=".urlencode($row['name']." <".$row['address'].">")."\">".$row['address']."</a></td><td><a href=\"index.php?do=contacts&amp;addr=".urlencode($row['address'])."\">edit</a></td></tr>";
 		}
 	}
 	echo "</table>";
@@ -244,7 +246,7 @@ elseif ($_GET['do'] == "send") {
 		$_SESSION["in_reply_to"] = "";
 ?>
 <h2>Message Sent</h2>
-<a href="<?php echo $me ?>">Return to inbox</a>?
+<div><a href="<?php echo $me ?>">Return to inbox</a>?</div>
 <?php } #}
 ########################### New Message ###########################
 elseif ($_GET['do'] == "new") {
@@ -269,7 +271,7 @@ elseif ($_GET['do'] == "message") {
 		expand_mess($_GET['collapse'],0);
 	}
 ?>
-<script>
+<script type="text/javascript">
 function moreact(value) {
 	do_actions(value, "", "<?php echo $convo ?>")
 }
@@ -278,7 +280,7 @@ function moreacts(vaule,tagname) {
 }
 </script>	
 <?php
-	echo "<div id=\"messbar\"><div style=\"float: right\"><a href=\"?do=message&convo=$convo&expand=all\">Expand All</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"?do=message&convo=$convo&collapse=all\">Collapse All</a></div>\n";
+	echo "<div id=\"messbar\"><div style=\"float: right\"><a href=\"?do=message&amp;convo=$convo&amp;expand=all\">Expand All</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"?do=message&amp;convo=$convo&amp;collapse=all\">Collapse All</a></div>\n";
 	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."</div>\n";
 	if ($result = mysql_query("SELECT uid,saved,expanded FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
@@ -353,7 +355,7 @@ function moreacts(vaule,tagname) {
 			}
 			
 			echo "<div class=\"emess\" id=\"mess".$row['uid']."\">";
-			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&collapse=".$row['uid']."#mess".$row['uid']."\">".nice_list_from($header->from)."</a></div>";
+			echo "<div class=\"etitle\"><a href=\"?do=message&amp;convo=$convo&amp;collapse=".$row['uid']."#mess".$row['uid']."\">".nice_list_from($header->from)."</a></div>";
 			echo "<div class=\"ehead\">From: ".nice_addr_list($header->from)."<br/>";
 			if ($header->to) echo "To: ".nice_addr_list($header->to)."<br/>";
 			if ($header->cc) echo "CC: ".nice_addr_list($header->cc)."<br/>";
@@ -365,21 +367,21 @@ function moreacts(vaule,tagname) {
 				echo "<br/><br/><h3>Attatchments</h3>";
 				foreach ($att as $anatt) {
 					if ($anatt['type'] == 5) echo "<img src=\"".$anatt['link']."\"/><br/>";
-					echo "<a href=\"".$anatt['link']."&down=1&name=".$anatt['name']."\">".$anatt['name']."</a><br/><br/>";
+					echo "<a href=\"".$anatt['link']."&down=1&amp;name=".$anatt['name']."\">".$anatt['name']."</a><br/><br/>";
 				}
 			}
 			echo "</div>"; ?>
-<br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div>
+<br/><div class="efoot"><a href="index.php?do=message&amp;convo=<?php echo $convo."&amp;reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div>
 <?php 
 	if ($_GET['reply'] == $row['uid']) {
-		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>\n";
+		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&amp;convo=$convo")."</div>\n";
 		$_SESSION["in_reply_to"] = $header->message_id;
 	}imap_rfc822_parse_headers
 ?></div><div class="espace"></div>
 	<?php
 		}
 		else {
-			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>\n";
+			echo "<div class=\"etitle\"><a href=\"?do=message&amp;convo=$convo&amp;expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>\n";
 		}	
 		if ($last) break;
 	}
@@ -516,7 +518,7 @@ else {
 				while ($row3=mysql_fetch_array($result3)) {
 					$tagtext .= " <span class=\"normaltag\">".$row3["name"]."</span>";
 				}			
-				$jlink = "onclick=\"location.href='$me?do=message&convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"";
+				$jlink = "onclick=\"location.href='$me?do=message&amp;convo=$i'\" onmouseover=\"document.body.style.cursor='pointer'\" onmouseout=\"document.body.style.cursor='auto'\"";
 				if ($view == "tag") {
 					if ($result4 = mysql_query("SELECT * FROM `".$db_prefix."convos` WHERE id=".$row[$convotitle]." AND account='$user'",$con)); else die(mysql_error());
 					if ($row4 = mysql_fetch_assoc($result4)) {
@@ -531,26 +533,26 @@ else {
 				}
 				if ($isread) $class = "read";
 				else $class = "unread";
-				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td width=\"3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\"></td><td width=\"3%\">".starpic($star,$i)."</td><td width=\"30%\" $jlink>".nice_list_from($header->from)." ($nomsgs)</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&convo=$i\">".nice_subject($header->subject)."</a></td><td width=\"15%\" $jlink>$date</td></tr>\n";
+				$messrows[] = "<tr class=\"$class\" id=\"mess$i\"><td style=\"width:3%\"><input type=\"checkbox\" id=\"tick$i\" name=\"check_$class\" onchange=\"javascript:hili($i,'$class')\" /></td><td style=\"width: 3%\">".starpic($star,$i)."</td><td style=\"width: 30%\" $jlink>".nice_list_from($header->from)." ($nomsgs)</td><td colspan=\"2\" $jlink>".$tagtext." "."<a href=\"$me?do=message&amp;convo=$i\">".nice_subject($header->subject)."</a></td><td style=\"width: 15%\" $jlink>$date</td></tr>\n";
 			}
 		}
 		$count ++;
 	}
 	
 	$navi = ($liststart+1)." - $listend of $total<br/>";
-	if ($liststart > 0) $navi .= "<a href=\"$me?do=list&view=$view&pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
-	if ($next) $navi .= "<a href=\"$me?do=list&view=$view&pos=$listend\">Next&rarr;</a>";
+	if ($liststart > 0) $navi .= "<a href=\"$me?do=list&amp;view=$view&amp;pos=".($liststart-$listlen)."\">&larr;Prev</a> ";
+	if ($next) $navi .= "<a href=\"$me?do=list&amp;view=$view&amp;pos=$listend\">Next&rarr;</a>";
 	$actions = actions();
 	$selecttools = "Select: <a href=\"javascript:selall()\">All</a>, <a href=\"javascript:selnone()\">None</a>, <a href=\"javascript:selread()\">Read</a>, <a href=\"javascript:selunread()\">Unread</a>";
 	
-	echo "<script language=\"javascript\" src=\"list.js\"></script>";
-	echo "<script language=\"javascript\">convoarr = [$jarray]</script>";
-	echo "<table width=\"100%\" id=\"list\"><form name=\"form\">";
+	echo "<script type=\"text/javascript\" src=\"list.js\"></script>";
+	echo "<script type=\"text/javascript\">convoarr = [$jarray]</script>";
+	echo "<form id=\"listform\" action=\"\"><table width=\"100%\" id=\"list\">";
 	echo "<tr class=\"header\"><td colspan=\"4\">$actions<br/>$selecttools</td><td colspan=\"2\" align=\"right\">$navi</td></tr>\n";
 	foreach ($messrows as $messrow) {
 		echo $messrow;
 	}
-	echo "<tr class=\"header\"><td colspan=\"4\">$selecttools<br/>$actions</td><td colspan=\"2\" align=\"right\">$navi</td></tr></form></table>\n";
+	echo "<tr class=\"header\"><td colspan=\"4\">$selecttools<br/>$actions</td><td colspan=\"2\" align=\"right\">$navi</td></tr></table></form>\n";
 	$_SESSION['convos'] = $convos;
 }
 

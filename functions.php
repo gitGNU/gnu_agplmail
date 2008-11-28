@@ -114,26 +114,26 @@ function actions() {
 	global $_GET;
 	$atext = "";
 	if ($view == "inbox")
-		$atext .= "<button type=\"button\" onClick=\"javascript:moreact('arc')\">Archive</button>";
+		$atext .= "<button type=\"button\" onclick=\"javascript:moreact('arc')\">Archive</button>";
 	elseif ($view == "arc")
-		$atext .= "<button type=\"button\" onClick=\"javascript:moreact('unarc')\">Move to Inbox</button>";
+		$atext .= "<button type=\"button\" onclick=\"javascript:moreact('unarc')\">Move to Inbox</button>";
 	elseif ($view == "tag")
-		$atext .= "<button type=\"button\" onClick=\"javascript:moreacts('untag','".$_GET['name']."')\">Remove tag</button>";
+		$atext .= "<button type=\"button\" onclick=\"javascript:moreacts('untag','".$_GET['name']."')\">Remove tag</button>";
 	if ($view == "bin")
-		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('realdel')\">Delete Forever</button> <button type=\"button\" onClick=\"javascript:moreact('undel')\">Restore</button>";
+		$atext .= " <button type=\"button\" onclick=\"javascript:moreact('realdel')\">Delete Forever</button> <button type=\"button\" onclick=\"javascript:moreact('undel')\">Restore</button>";
 	else
-		$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
+		$atext .= " <button type=\"button\" onclick=\"javascript:moreact('del')\">Delete</button>";
 	$atext .= " <select><option>More Actions</option>";
-	if ($view == "arc") $atext .= "<option onClick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
-	elseif ($view!="inbox" && $view!="bin") $atext .= "<option onClick=\"javascript:moreact('unarc')\">&nbsp;&nbsp;Move to Inbox</option><option onClick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
-	$atext .= "<option onClick=\"javascript:moreact('read')\">&nbsp;&nbsp;Mark as Read</option><option onClick=\"javascript:moreact('unread')\">&nbsp;&nbsp;Mark as Unread</option><option onClick=\"javascript:moreact('star')\">&nbsp;&nbsp;Add star</option><option onClick=\"javascript:moreact('unstar')\">&nbsp;&nbsp;Remove star</option>";
-	$atext .= "<option>Add Tag</option><option onClick=\"moreacts('newtag','')\">&nbsp;&nbsp;New Tag...</option>";
+	if ($view == "arc") $atext .= "<option onclick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
+	elseif ($view!="inbox" && $view!="bin") $atext .= "<option onclick=\"javascript:moreact('unarc')\">&nbsp;&nbsp;Move to Inbox</option><option onclick=\"javascript:moreact('arc')\">&nbsp;&nbsp;Archive</option>";
+	$atext .= "<option onclick=\"javascript:moreact('read')\">&nbsp;&nbsp;Mark as Read</option><option onclick=\"javascript:moreact('unread')\">&nbsp;&nbsp;Mark as Unread</option><option onclick=\"javascript:moreact('star')\">&nbsp;&nbsp;Add star</option><option onclick=\"javascript:moreact('unstar')\">&nbsp;&nbsp;Remove star</option>";
+	$atext .= "<option>Add Tag</option><option onclick=\"moreacts('newtag','')\">&nbsp;&nbsp;New Tag...</option>";
 	global $con;
 	global $db_prefix;
 	global $user;
 	if ($result = mysql_query("SELECT DISTINCT name FROM `".$db_prefix."tags` WHERE account='$user'",$con)); else die(mysql_error());
 	while($row=mysql_fetch_array($result)) {
-		$atext .= "<option onClick=\"moreacts('tag','".$row["name"]."')\">&nbsp;&nbsp;".$row["name"]."</option>";
+		$atext .= "<option onclick=\"moreacts('tag','".$row["name"]."')\">&nbsp;&nbsp;".$row["name"]."</option>";
 	}
 	$atext .= "</select> <a href=\"$self\">Refresh</a>";
 	return $atext;
@@ -153,7 +153,7 @@ function add_setting($name, $value) {
 function get_setting($name) {
 	global $con;
 	global $db_prefix;
-	global $user;$atext .= " <button type=\"button\" onClick=\"javascript:moreact('del')\">Delete</button>";
+	global $user;$atext .= " <button type=\"button\" onclick=\"javascript:moreact('del')\">Delete</button>";
 	if ($result = mysql_query("SELECT * FROM `".$db_prefix."settings` WHERE account='$user' AND name='$name'",$con)); else die(mysql_error());
 	if ($row=mysql_fetch_array($result)) {
 		return $row["value"];
@@ -161,9 +161,9 @@ function get_setting($name) {
 }
 function starpic($star, $convo) {
 	if ($star)
-		return "<a href=\"$me?do=listaction&type=unstar&range=$convo\"><img src=\"star_fill.png\" alt=\"{*}\" border=\"0\"/></a>";
+		return "<a href=\"$me?do=listaction&amp;type=unstar&amp;range=$convo\"><img src=\"star_fill.png\" alt=\"{*}\" style=\"border: 0\"/></a>";
 	else
-		return "<a href=\"$me?do=listaction&type=star&range=$convo\"><img src=\"star_nofill.png\" alt=\"{ }\" border=\"0\"/></a>";
+		return "<a href=\"$me?do=listaction&amp;type=star&amp;range=$convo\"><img src=\"star_nofill.png\" alt=\"{ }\" style=\"border: 0\"/></a>";
 }
 
 function get_mess($messid, $name) {
@@ -321,7 +321,7 @@ function partloop($parts,$level) {
 			}
 		}
 		elseif ($part->type > 2) {
-		#http://freedomdreams.co.uk/agplmail/index.php?do=att&mess=145&part=2&enc=3&type=image/jpeg&down=1&name=me_cam.jpg
+		#http://freedomdreams.co.uk/agplmail/index.php?do=att&mess=145&part=2&enc=3&amp;type=image/jpeg&down=1&amp;name=me_cam.jpg
 			global $mbox;
 			global $msgno;
 			global $uid;
@@ -331,7 +331,7 @@ function partloop($parts,$level) {
 			if ($part->id && $part->type == 5) {
 				global $emo;
 				$name = substr($part->id,1,-1);
-				$emo[$name] = "?do=att&mess=$uid&part=2&enc=".$part->encoding."&type=image/$ext";
+				$emo[$name] = "?do=att&mess=$uid&part=2&enc=".$part->encoding."&amp;type=image/$ext";
 			} else {
 				if ($part->parameters) {
 					foreach ($part->parameters as $par) {
@@ -351,7 +351,7 @@ function partloop($parts,$level) {
 				}
 				if ($name) {
 					global $att;
-					$att[] = array('name'=>$name, 'link'=>"?do=att&mess=$uid&part=2&enc=".$part->encoding."&type=$type/$ext", 'type'=>$part->type);
+					$att[] = array('name'=>$name, 'link'=>"?do=att&mess=$uid&part=2&enc=".$part->encoding."&amp;type=$type/$ext", 'type'=>$part->type);
 				}
 			}
 		}
