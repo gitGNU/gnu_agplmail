@@ -277,8 +277,8 @@ function moreacts(vaule,tagname) {
 }
 </script>	
 <?php
-	echo " <div style=\"float: right\"><a href=\"?do=message&convo=$convo&expand=all\">Expand All</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"?do=message&convo=$convo&collapse=all\">Collapse All</a></div>";
-	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."<br />";
+	echo "<div id=\"messbar\"><div style=\"float: right\"><a href=\"?do=message&convo=$convo&expand=all\">Expand All</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"?do=message&convo=$convo&collapse=all\">Collapse All</a></div>\n";
+	echo "<a href=\"$me?do=list\">&laquo; Back to ".nice_view($view)."</a> ".actions()."</div>\n";
 	if ($result = mysql_query("SELECT uid,saved,expanded FROM `".$db_prefix."mess` WHERE convo=$convo AND account='$user' ORDER BY pos",$con)); else die(mysql_error());
 	$first = true;
 	$last = false;
@@ -294,10 +294,6 @@ function moreacts(vaule,tagname) {
 		return true;
 	}
 	while (get_row()) {
-		if ($first) {
-			echo "<h2>".$header->subject."</h2>";
-			$first = false;
-		}
 		if ($exall !== NULL) expand_mess($row['uid'],$exall);
 		
 		$uid = $row['uid'];
@@ -315,6 +311,11 @@ function moreacts(vaule,tagname) {
 			#print_r($header);
 			$timestamp = $header->udate;
 			$unseen = $header->Unseen;
+		}
+		
+		if ($first) {
+			echo "<h2 class=\"mess\">".$header->subject."</h2>";
+			$first = false;
 		}
 		
 		if (( $unseen == "U" || $row['expanded'] || ($last && $row['expanded'] !== '0') ) && $exall !== 0 || $exall == 1) {	
@@ -367,16 +368,17 @@ function moreacts(vaule,tagname) {
 				}
 			}
 			echo "</div>"; ?>
-<br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div><?php 
+<br/><div class="efoot"><a href="index.php?do=message&convo=<?php echo $convo."&reply=".$row['uid']; ?>#esend">Reply</a> Reply to All Forward</div>
+<?php 
 	if ($_GET['reply'] == $row['uid']) {
-		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>";
+		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>\n";
 		$_SESSION["in_reply_to"] = $header->message_id;
 	}imap_rfc822_parse_headers
 ?></div><div class="espace"></div>
 	<?php
 		}
 		else {
-			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>";
+			echo "<div class=\"etitle\"><a href=\"?do=message&convo=$convo&expand=".$row['uid']."#mess".$row['uid']."\">".nice_addr_list($header->from)."</a></div>\n";
 		}	
 		if ($last) break;
 	}
