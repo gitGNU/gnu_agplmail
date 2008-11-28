@@ -177,7 +177,7 @@ elseif ($_GET['do'] == "contacts") {
 		if ($row['address'] != "" && $row['address'] == urldecode($_GET['addr'])) {
 			echo "<tr><form method=\"post\" action=\"index.php?do=contacts\"><td><input name=\"name\"/ value=\"".$row['name']."\"></td><td><input name=\"addr\" value=\"".$row['address']."\"/></td><td><button type=\"submit\">Edit</button></td></from></tr>";
 		} else {
-			echo "<tr><td>".$row['name']."</td><td><a href=\"?do=new&to=".urlencode($row['name']." ".$row['address'])."\">".$row['address']."</a></td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
+			echo "<tr><td>".$row['name']."</td><td><a href=\"?do=new&to=".urlencode($row['name']." <".$row['address'].">")."\">".$row['address']."</a></td><td><a href=\"index.php?do=contacts&addr=".urlencode($row['address'])."\">edit</a></td></tr>";
 		}
 	}
 	echo "</table>";
@@ -307,6 +307,7 @@ function moreacts(vaule,tagname) {
 			if ($row2 = mysql_fetch_assoc($result2)) {
 				$header = imap_rfc822_parse_headers($row2['headers']);
 				$body = $row2['body'];
+				$body2 = $body;
 				$timestamp = strtotime($row2['date']);
 			}
 		} else {
