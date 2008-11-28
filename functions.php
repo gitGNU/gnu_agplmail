@@ -401,6 +401,7 @@ if ($_POST['username']) {
 	$_SESSION['password'] = $_POST['password'];
 }
 if ($_POST['domain']) $_SESSION['domain'] = $_POST['domain'];
+elseif (sizeof($domain) == 1) $_SESSION['domain'] = $domain[0];
 $user = $_SESSION['username'].$_SESSION['domain'];
 $uname = $_SESSION['username'];
 $pass = $_SESSION['password'];

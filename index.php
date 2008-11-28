@@ -45,6 +45,11 @@ if ($_GET['do'] == "att") {
 <!--[if IE ]>
 <link rel="stylesheet" type="text/css" href="default_ie.css"></link>
 <![endif]-->
+<?php if (!$libreapps) { ?>
+<style>
+body { padding: 0.5em; }
+</style>
+<?php } ?>
 <script language="javascript" src="ajax.js"></script>
 <script language="javascript" src="main.js"></script>
 <script language="javascript" src="whizzywig.js"></script>
@@ -67,16 +72,17 @@ if ($_GET['do'] == "att") {
 
 <?php
 
-if ($libreapps) include "../header2.php";
-else echo "<h1>AGPLMail</h1>";
+if ($libreapps) {
+    include "../header2.php";
+} else echo "<h1>AGPLMail</h1>";
 
 
 if ($_GET['do'] == logout) {
 	session_destroy(); ?>
-<h2>Logged out</h2> <a href="<?php echo $me ?>">Return to login</a>?
+<div id="la-content"><h2>Logged out</h2> <a href="<?php echo $me ?>">Return to login</a>?</div>
 <?php }
 elseif (!$_SESSION['username']) {
-echo "<br/>".$customhome;
+echo "<div id=\"la-content\">".$customhome;
 ?>
 
 <h2>Login</h2>
@@ -84,15 +90,18 @@ echo "<br/>".$customhome;
 	User: <input name="username"></input>
 <?php
 if ($domain) {
-	echo "<select name=\"domain\">";
-	foreach ($domain as $dom) echo "<option value=\"$dom\">$dom</option>";
-	echo "</select>";
+    if (sizeof($domain) > 1) {
+	    echo "<select name=\"domain\">";
+	    foreach ($domain as $dom) echo "<option value=\"$dom\">$dom</option>";
+	    echo "</select>";
+	}
 } else echo "<input name=\"domain\"></input>";
 ?>
 	<br/>
 	Password: <input name="password" type="password"></input><br/>
 	<button type="submit">Submit</button>
 </form>
+</div>
 
 <?php }
 else {
@@ -109,7 +118,7 @@ if ($_GET['do'] == "listaction" || $_GET['do'] == "messaction") {
 	do_actions();
 }
 
-echo "<div id=\"intro\">Welcome ".get_setting("name").", it is ".date("H:i").". <a href=\"$me?do=logout\">Logout</a>?</div>";
+if (!$libreapps) echo "<div id=\"intro\">Welcome ".get_setting("name").", it is ".date("H:i").". <a href=\"$me?do=logout\">Logout</a>?</div>";
 
 echo "<div id=\"sidebar\">";
 echo "<a href=\"$me?do=new\">New Email</a>";
@@ -362,7 +371,7 @@ function moreacts(vaule,tagname) {
 		echo "<div id=\"esend\">".enewtext($header->reply_toaddress,"","",nice_re($header->subject),"On ".date("j F Y H:i",$header->udate).", ".$header->fromaddress." wrote:\n".indent($body),"&convo=$convo")."</div>";
 		$_SESSION["in_reply_to"] = $header->message_id;
 	}imap_rfc822_parse_headers
-?></div>
+?></div><div class="espace"></div>
 	<?php
 		}
 		else {
@@ -548,8 +557,10 @@ mysql_close($con);
 
 } }
 
-if ($libreapps) include "../footer.php";
-else { ?>
+if ($libreapps) {
+    echo "<br/><br/>";
+    include "../footer.php";
+} else { ?>
 
 <br/><br/><a href="http://dev.libreapps.com/wiki/AGPLMail">AGPLMail</a> is released under the <a href="http://www.fsf.org/licensing/licenses/agpl-3.0.html">AGPL v3</a>. Care to see the <a href="source.php">source code</a>?
 

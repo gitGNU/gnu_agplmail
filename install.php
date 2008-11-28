@@ -241,7 +241,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET') {
 	$sql .= "  `date` datetime NOT NULL,";
 	$sql .= "  `deleted` tinyint(1) NOT NULL,";
 	$sql .= "  `saved` int(11) NOT NULL default '0',";
-	$sql .= "  `expanded` tinyint(1) NOT NULL";
+	$sql .= "  `expanded` tinyint(1)";
 	$sql .= ") ENGINE=MyISAM DEFAULT CHARSET=latin1; ";
 
 	mysql_query($sql) or die ('Cannot create mess table: ' . mysql_error());
