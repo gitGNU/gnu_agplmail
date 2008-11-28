@@ -16,7 +16,7 @@
 # along with AGPLMail.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-toAC = function() {
+function createac(a, b) {
     // Use an XHRDataSource
     var oDS = new YAHOO.util.XHRDataSource("ajax.php?do=contactac&");
     // Set the responseType
@@ -31,7 +31,7 @@ toAC = function() {
     oDS.maxCacheEntries = 5;
 
     // Instantiate the AutoComplete
-    var oAC = new YAHOO.widget.AutoComplete("to", "tocont", oDS);
+    var oAC = new YAHOO.widget.AutoComplete(a, b, oDS);
     oAC.queryQuestionMark = false;
     //oAC.useIFrame = true;
     oAC.formatResult = function(oResultData, sQuery, sResultMatch) {
@@ -42,7 +42,11 @@ toAC = function() {
         oDS: oDS,
         oAC: oAC
     };
-}();
+};
+
+toAC = createac("to", "tocont");
+ccAC = createac("cc", "cccont");
+bccAC = createac("bcc", "bcccont");
 
 function messhtml() {	
     //Setup some private variables 

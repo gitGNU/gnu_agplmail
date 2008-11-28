@@ -96,8 +96,8 @@ function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 	}
 	$text .= "<form method=\"post\" action=\"index.php?do=send$extra\" id=\"form\">
 	<div class=\"messlabel\">To:</div><div id=\"toac\" class=\"messac\"><input id=\"to\" name=\"to\" value=\"$to\"/><div class=\"cont\" id=\"tocont\"></div></div>";
-/*	$text .= "CC: <input name=\"cc\" value=\"$cc\"/><br/>
-	BCC: <input name=\"bcc\" value=\"$bcc\"/><br/>";*/
+	$text .= "<div id=\"ccrow\"><div class=\"messlabel\">CC:</div><div id=\"ccac\" class=\"messac\"><input id=\"cc\" name=\"cc\" value=\"$cc\"/><div class=\"cont\" id=\"cccont\"></div></div></div>";
+	$text .= "<div id=\"bccrow\"><div class=\"messlabel\">BCC:</div><div id=\"bccac\" class=\"messac\"><input id=\"bcc\" name=\"bcc\" value=\"$bcc\"/><div class=\"cont\" id=\"bcccont\"></div></div></div>";
 	$text .= "Subject: <input id=\"subject\" name=\"subject\" value=\"$sub\"><br/>
 	<textarea id=\"messe\" name=\"content\" style=\"width:100%; height:300px;\">".$con.$sig."</textarea><br/>";
 	$text .= "<script language=\"javascript\" src=\"mess.js\"></script>";

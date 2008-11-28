@@ -32,7 +32,9 @@ if ($_GET['do'] == "contactac") {
 	if ($result = mysql_query("SELECT * FROM `".$db_prefix."addressbook` WHERE account='$user' AND ( name like '$comp' OR address like '$comp' ) ORDER BY priority DESC, name")); else die(mysql_error());
 	#echo $_SERVER['REQUEST_URI']."\t".$_SERVER['REQUEST_URI']."\n";
 	while($row=mysql_fetch_array($result)) {
-		echo $prev.$row['name']." <".$row['address'].">\t".str_ireplace($bit, "<strong>$bit</strong>", $row['name']." &lt;".$row['address']."&gt;")."\n";
+		$name = str_ireplace($bit, "<strong>$bit</strong>", $row['name']);
+		$addr = str_ireplace($bit, "<strong>$bit</strong>", $row['address']);
+		echo $prev.$row['name']." <".$row['address'].">\t".$name." &lt;".$addr."&gt;"."\n";
 	}
 }
 

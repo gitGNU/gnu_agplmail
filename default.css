@@ -103,7 +103,7 @@ tr.header {
 	background-color: #BBBBFF;
 }
 
-#toac, #subject {
+.messac, #subject {
     width: 40em;
 }
 .messlabel {
@@ -112,7 +112,7 @@ tr.header {
 .messac {
 	position: relative;
 	top: -1.5em;
-	left: 2em;
+	left: 2.5em;
 }
 #messbar {
     padding-top: 0.5em;
