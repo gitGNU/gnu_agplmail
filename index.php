@@ -150,7 +150,7 @@ if ($_GET['do'] == "settings") {
 	if ($_POST['name']) add_setting("name",$_POST['name']);
 	if ($_POST['listlen']) add_setting("listlen",$_POST['listlen']);
 	if ($_POST['sig']) add_setting("sig",$_POST['sig']);
-	add_setting("html",$_POST['html']);
+	if ($_POST['html']) add_setting("html",$_POST['html']);
 	?>
 <h2>Settings</h2>
 <form method="post" action="<?php echo $me ?>?do=settings">

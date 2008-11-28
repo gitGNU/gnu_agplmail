@@ -92,7 +92,7 @@ function enewtext($to, $cc, $bcc, $sub, $con, $extra="") {
 	if ($html == "false") {
 		$sig = "\n\n\n".get_setting("sig");
 	} else {
-		$sig = "<br /><br />".nl2br(get_setting("sig"));
+		$sig = "<br /><br />".nice_plain(get_setting("sig"));
 	}
 	$text .= "<form method=\"post\" action=\"index.php?do=send$extra\" id=\"form\">
 	<div class=\"messlabel\">To:</div><div id=\"toac\" class=\"messac\"><input id=\"to\" name=\"to\" value=\"$to\"/><div class=\"cont\" id=\"tocont\"></div></div>";
