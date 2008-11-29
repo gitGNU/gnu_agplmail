@@ -396,14 +396,14 @@ if (mysql_select_db($db_db, $con)); else die(mysql_error());
 
 session_start();
 if ($_POST['username']) {
-	$_SESSION['username'] = $_POST['username'];
-	$_SESSION['password'] = $_POST['password'];
+	$_SESSION['la-username'] = $_POST['username'];
+	$_SESSION['la-password'] = $_POST['password'];
 }
 if ($_POST['domain']) $_SESSION['domain'] = $_POST['domain'];
 elseif (sizeof($domain) == 1) $_SESSION['domain'] = $domain[0];
-$user = $_SESSION['username'].$_SESSION['domain'];
-$uname = $_SESSION['username'];
-$pass = $_SESSION['password'];
+$user = $_SESSION['la-username'].$_SESSION['domain'];
+$uname = $_SESSION['la-username'];
+$pass = $_SESSION['la-password'];
 
 $view = $_GET['view'];
 if ($view) $_SESSION['view'] = $view;

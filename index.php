@@ -82,12 +82,13 @@ if ($libreapps) {
 
 if ($_GET['do'] == logout) {
 	session_destroy(); ?>
-<div id="la-content"><h2>Logged out</h2> <a href="<?php echo $me ?>">Return to login</a>?</div>
+<div id="la-content"><h2>Logged out</h2> <a href="<?php echo $me ?>">Return</a>?</div>
 <?php }
-elseif (!$_SESSION['username']) {
+elseif (!$_SESSION['la-username']) {
 echo "<div id=\"la-content\">".$customhome;
-?>
+if ($libreapps) { ?>
 
+<?php } else { ?>
 <h2>Login</h2>
 <form method="post" action="<?php echo $me ?>"><div id="form">
 	User: <input name="username"></input>
@@ -104,6 +105,7 @@ if ($domain) {
 	Password: <input name="password" type="password"></input><br/>
 	<button type="submit">Submit</button>
 </div></form>
+<?php } ?>
 </div>
 
 <?php }
